@@ -23,11 +23,6 @@ JahshakaVR brings you the future of immersive digital content creation with the 
 ###Steps:
 - clone repository
 - open .pro file in QtCreator
-- add an "install" make build step as shown [here](http://stackoverflow.com/questions/11593165/qtcreator-copy-files-to-output-directory-with-installs)
-    - Switch to **Projects** Mode: press Ctrl+5.
-    - On **Build Settings** tab under **Build Steps** click on **Add Build Step**.
-    - Choose **Make** from the menu.
-    - Write "install" into **Make arguments:** text input box.
 - Run
 
 ## Credits
