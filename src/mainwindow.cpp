@@ -38,7 +38,7 @@ For more information see the LICENSE file
 #include <Qt3DRender/qdirectionallight.h>
 #include <Qt3DExtras/qdiffusemapmaterial.h>
 #include <Qt3DExtras/QOrbitCameraController>
-#include <Qt3DRender/QObjectPicker.h>
+#include <Qt3DRender/QObjectPicker>
 
 #include <Qt3DCore/qtransform.h>
 #include <Qt3DCore/qaspectengine.h>

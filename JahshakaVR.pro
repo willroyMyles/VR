@@ -205,7 +205,7 @@ win32: RC_ICONS = icon.ico
 
 #http://stackoverflow.com/questions/19066593/copy-a-file-to-build-directory-after-compiling-project-with-qt/39234363#39234363
 moveassets.commands = $(COPY_DIR) \"$$shell_path($$PWD/assets)\" \"$$shell_path($$OUT_PWD/assets)\"
-movecontent.commands = $(COPY_DIR) \"$$shell_path($$PWD/app/content)\" \"$$shell_path($$OUT_PWD/app/content)\"
+movecontent.commands = $(COPY_DIR) \"$$shell_path($$PWD/app)\" \"$$shell_path($$OUT_PWD/app)\"
 
 first.depends = $(first) moveassets movecontent
 export(first.depends)
