@@ -203,12 +203,12 @@ RESOURCES += \
 
 win32: RC_ICONS = icon.ico
 
-install_assets.path = $$OUT_PWD/assets
-install_assets.files = assets/*
+#http://stackoverflow.com/questions/19066593/copy-a-file-to-build-directory-after-compiling-project-with-qt/39234363#39234363
+moveassets.commands = $(COPY_DIR) \"$$shell_path($$PWD/assets)\" \"$$shell_path($$OUT_PWD/assets)\"
+movecontent.commands = $(COPY_DIR) \"$$shell_path($$PWD/app/content)\" \"$$shell_path($$OUT_PWD/app/content)\"
 
-install_content.path = $$OUT_PWD/app/content
-install_content.files = app/content/*
-
-INSTALLS += \
-    install_assets \
-    install_content
+first.depends = $(first) moveassets movecontent
+export(first.depends)
+export(movecontent.commands)
+export(moveassets.commands)
+QMAKE_EXTRA_TARGETS += first moveassets movecontent
