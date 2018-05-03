@@ -375,6 +375,7 @@ void ProjectManager::closeProjectFromWidget(ItemGridWidget *widget)
 {
     Q_UNUSED(widget);
     emit closeProject();
+    Globals::project->setProjectGuid(QString::null);
 }
 
 void ProjectManager::deleteProjectFromWidget(ItemGridWidget *widget)
@@ -469,17 +470,14 @@ void ProjectManager::newProject()
         auto fullProjectPath = QDir(QDir(projectPath).filePath("Projects")).filePath(projectGuid);
 
         Globals::project->setProjectPath(fullProjectPath, projectName);
+        Globals::project->setProjectGuid(projectGuid);
 
         // make a dir and the default subfolders
         QDir projectDir(fullProjectPath);
         if (!projectDir.exists()) projectDir.mkpath(".");
 
-		QJsonObject assetProperty;
-
 		// Insert an empty scene to get access to the project guid... 
         if (!db->createProject(projectGuid, projectName)) return;
-
-        Globals::project->setProjectGuid(projectGuid);
 
         emit fileToCreate(projectName, fullProjectPath);
 

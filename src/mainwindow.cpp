@@ -807,8 +807,6 @@ void MainWindow::closeProject()
 
 	undoStackCount = 0;
 
-    Globals::project->setProjectGuid(Q_NULLPTR);
-
 	if (currentSpace == WindowSpaces::DESKTOP) {
 		deselectViewports();
 		return;
@@ -2786,20 +2784,20 @@ void MainWindow::newScene()
 
 void MainWindow::newProject(const QString &filename, const QString &projectPath)
 {
-    newScene();
+    if (UiManager::isSceneOpen) closeProject();
 
-    UiManager::updateWindowTitle();
+    newScene();
+    UiManager::isSceneOpen = true;
+    ui->actionClose->setDisabled(false);
+
+    saveScene(filename, projectPath);
 
     assetWidget->trigger();
 
-    UiManager::isSceneOpen = true;
-    ui->actionClose->setDisabled(false);
+    UiManager::clearUndoStack();
+    UiManager::updateWindowTitle();
+
     switchSpace(WindowSpaces::EDITOR);
-
-	// todo - do this once instead of having two writers as above
-	saveScene(filename, projectPath);
-
-	undoStackCount = 0;
 }
 
 MainWindow::~MainWindow()
