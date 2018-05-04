@@ -278,6 +278,8 @@ public slots:
     void toggleLightWires(bool state);
     void showProjectManagerInternal();
 
+	void refresh();
+
 private slots:
     void translateGizmo();
     void rotateGizmo();

@@ -2554,6 +2554,10 @@ void MainWindow::setupShortcuts()
     // Save
     shortcut = new QShortcut(QKeySequence("ctrl+s"),sceneView);
     connect(shortcut, SIGNAL(activated()), this, SLOT(saveScene()));
+
+	//reload stylesheet for testing 
+	shortcut = new QShortcut(QKeySequence("ctrl+1"), sceneView);
+	connect(shortcut, SIGNAL(activated()), this, SLOT(refresh()));
 }
 
 void MainWindow::toggleDockWidgets()
@@ -2773,6 +2777,8 @@ void MainWindow::showProjectManagerInternal()
     pmContainer->cleanupOnClose();
 }
 
+
+
 void MainWindow::newScene()
 {
     this->sceneView->makeCurrent();
@@ -2865,4 +2871,22 @@ void MainWindow::enterPlayMode()
     UiManager::enterPlayMode();
     playSceneBtn->setToolTip("Stop playing");
     playSceneBtn->setIcon(QIcon(":/icons/g_stop.svg"));
+}
+
+void MainWindow::refresh()
+{
+	QFile file("styleSheet.css");
+	file.open(QIODevice::ReadOnly);
+	if (!file.isOpen()) {
+		qDebug() << "stylesheet not opened";
+		return;
+	}
+	QString StyleSheet = QLatin1String(file.readAll());
+	qApp->style()->unpolish(this);
+	this->setStyleSheet(StyleSheet);
+	qApp->style()->polish(this);
+	file.close();
+	qDebug() << "completed";
+
+	
 }
