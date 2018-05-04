@@ -491,3 +491,20 @@ SceneHierarchyWidget::~SceneHierarchyWidget()
 {
     delete ui;
 }
+
+void SceneHierarchyWidget::refresh()
+{
+	QFile file("styleSheet.css");
+	qDebug() << QDir::currentPath();
+	file.open(QIODevice::ReadOnly);
+	if (!file.isOpen()) {
+		qDebug() << "stylesheet not opened hier";
+		return;
+	}
+	QString StyleSheet = QLatin1String(file.readAll());
+	qApp->style()->unpolish(this);
+	StyleSheet.replace("accent", "rgba(40,128, 185,.9)");
+	this->setStyleSheet(StyleSheet);
+	qApp->style()->polish(this);
+	file.close();
+}

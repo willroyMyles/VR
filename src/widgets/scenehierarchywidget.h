@@ -40,6 +40,8 @@ public:
     explicit SceneHierarchyWidget(QWidget *parent = 0);
     ~SceneHierarchyWidget();
 
+	void refresh();
+
     void setScene(QSharedPointer<iris::Scene> scene);
     void setMainWindow(MainWindow* mainWin);
 

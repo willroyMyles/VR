@@ -568,10 +568,10 @@ WindowSpaces MainWindow::getWindowSpace()
 
 void MainWindow::deselectViewports()
 {
-	editor_menu->setStyleSheet("color: #444; border-color: #111");
+//	editor_menu->setStyleSheet("color: #444; border-color: #111");
 	editor_menu->setDisabled(true);
 	editor_menu->setCursor(Qt::ArrowCursor);
-	player_menu->setStyleSheet("color: #444; border-color: #111");
+//	player_menu->setStyleSheet("color: #444; border-color: #111");
 	player_menu->setDisabled(true);
 	player_menu->setCursor(Qt::ArrowCursor);
 }
@@ -582,7 +582,9 @@ void MainWindow::switchSpace(WindowSpaces space)
 	const QString selectedMenu   = "border-color: #3498db";
 	const QString unselectedMenu = "border-color: #111";
 
-	assets_menu->setStyleSheet(unselectedMenu);
+	//assets_menu->setStyleSheet(unselectedMenu);
+	qDebug() << space;
+	qDebug() << "not one thig printed";
 
     switch (currentSpace = space) {
         case WindowSpaces::DESKTOP: {
@@ -590,27 +592,34 @@ void MainWindow::switchSpace(WindowSpaces space)
 				//if (settings->getValue("auto_save", true).toBool()) saveScene();
 				saveScene();
 				pmContainer->populateDesktop(true);
+				player_menu->setDisabled(false);
+				editor_menu->setDisabled(false);
+			}
+			else {
+				player_menu->setDisabled(true);
+				editor_menu->setDisabled(true);
 			}
 			
 			ui->stackedWidget->setCurrentIndex(0);
 
             toggleWidgets(false);
 
-            worlds_menu->setStyleSheet(selectedMenu);
+         //   worlds_menu->setStyleSheet(selectedMenu);
+			worlds_menu->setChecked(true);
             ui->actionClose->setDisabled(true);
 
             if (UiManager::isSceneOpen) {
-                editor_menu->setStyleSheet(unselectedMenu);
+            //    editor_menu->setStyleSheet(unselectedMenu);
                 editor_menu->setDisabled(false);
-                player_menu->setStyleSheet(unselectedMenu);
+            //    player_menu->setStyleSheet(unselectedMenu);
                 player_menu->setDisabled(false);
                 //ui->assets_menu->setStyleSheet(unselectedMenu);
                 //ui->assets_menu->setDisabled(false);
             } else {
-                editor_menu->setStyleSheet(disabledMenu);
+            //    editor_menu->setStyleSheet(disabledMenu);
                 editor_menu->setDisabled(true);
                 editor_menu->setCursor(Qt::ArrowCursor);
-                player_menu->setStyleSheet(disabledMenu);
+            //    player_menu->setStyleSheet(disabledMenu);
                 player_menu->setDisabled(true);
                 player_menu->setCursor(Qt::ArrowCursor);
                 //ui->assets_menu->setStyleSheet(disabledMenu);
@@ -631,11 +640,11 @@ void MainWindow::switchSpace(WindowSpaces space)
 			playerControls->setVisible(false);
 
             toolBar->setVisible(true);
-            worlds_menu->setStyleSheet(unselectedMenu);
-            editor_menu->setStyleSheet(selectedMenu);
+        //    worlds_menu->setStyleSheet(unselectedMenu);
+        //    editor_menu->setStyleSheet(selectedMenu);
             editor_menu->setDisabled(false);
             editor_menu->setCursor(Qt::PointingHandCursor);
-            player_menu->setStyleSheet(unselectedMenu);
+        //    player_menu->setStyleSheet(unselectedMenu);
             player_menu->setDisabled(false);
             player_menu->setCursor(Qt::PointingHandCursor);
             //ui->assets_menu->setStyleSheet(unselectedMenu);
@@ -656,11 +665,11 @@ void MainWindow::switchSpace(WindowSpaces space)
             ui->stackedWidget->setCurrentIndex(1);
             toggleWidgets(false);
             toolBar->setVisible(false);
-            worlds_menu->setStyleSheet(unselectedMenu);
-            editor_menu->setStyleSheet(unselectedMenu);
+        //    worlds_menu->setStyleSheet(unselectedMenu);
+        //    editor_menu->setStyleSheet(unselectedMenu);
             editor_menu->setDisabled(false);
             editor_menu->setCursor(Qt::PointingHandCursor);
-            player_menu->setStyleSheet(selectedMenu);
+        //    player_menu->setStyleSheet(selectedMenu);
             player_menu->setDisabled(false);
             player_menu->setCursor(Qt::PointingHandCursor);
             //ui->assets_menu->setStyleSheet(unselectedMenu);
@@ -680,17 +689,18 @@ void MainWindow::switchSpace(WindowSpaces space)
 			static_cast<AssetView*>(ui->stackedWidget->currentWidget())->spaceSplits();
     		toggleWidgets(false);
     		toolBar->setVisible(false);
+			assets_menu->setChecked(true);
 			if (UiManager::isSceneOpen) {
-				worlds_menu->setStyleSheet(unselectedMenu);
-				editor_menu->setStyleSheet(unselectedMenu);
-				player_menu->setStyleSheet(unselectedMenu);
+			//	worlds_menu->setStyleSheet(unselectedMenu);
+			//	editor_menu->setStyleSheet(unselectedMenu);
+			//	player_menu->setStyleSheet(unselectedMenu);
 				//ui->assets_menu->setDisabled(false);
 				//ui->assets_menu->setCursor(Qt::PointingHandCursor);
 				playSceneBtn->hide();
 			}
 
-			worlds_menu->setStyleSheet(unselectedMenu);
-			assets_menu->setStyleSheet(selectedMenu);
+			//worlds_menu->setStyleSheet(unselectedMenu);
+			//assets_menu->setStyleSheet(selectedMenu);
     		
 			break;
     	}
@@ -2129,15 +2139,25 @@ void MainWindow::setupViewPort()
 	worlds_menu = new QPushButton("Worlds");
 	worlds_menu->setObjectName("worlds_menu");
 	worlds_menu->setCursor(Qt::PointingHandCursor);
+	worlds_menu->setCheckable(true);
+	worlds_menu->setChecked(true);
 	player_menu = new QPushButton("Player");
 	player_menu->setObjectName("player_menu");
 	player_menu->setCursor(Qt::PointingHandCursor);
+	player_menu->setCheckable(true);
 	editor_menu = new QPushButton("Editor");
 	editor_menu->setObjectName("editor_menu");
 	editor_menu->setCursor(Qt::PointingHandCursor);
+	editor_menu->setCheckable(true);
 	assets_menu = new QPushButton("Assets");
 	assets_menu->setObjectName("assets_menu");
 	assets_menu->setCursor(Qt::PointingHandCursor);
+	assets_menu->setCheckable(true);
+	QButtonGroup *buttonGroup = new QButtonGroup();
+	buttonGroup->addButton(worlds_menu);
+	buttonGroup->addButton(player_menu);
+	buttonGroup->addButton(editor_menu);
+	buttonGroup->addButton(assets_menu);
 
 	assets_panel = new QWidget;
 
@@ -2883,9 +2903,11 @@ void MainWindow::refresh()
 	}
 	QString StyleSheet = QLatin1String(file.readAll());
 	qApp->style()->unpolish(this);
+	StyleSheet.replace("accent", "rgba(40,128, 185,.9)");
 	this->setStyleSheet(StyleSheet);
 	qApp->style()->polish(this);
 	file.close();
+	sceneHierarchyWidget->refresh();
 	qDebug() << "completed";
 
 	
