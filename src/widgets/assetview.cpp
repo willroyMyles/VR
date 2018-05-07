@@ -484,18 +484,18 @@ AssetView::AssetView(Database *handle, QWidget *parent) : db(handle), QWidget(pa
 	filterPane->setObjectName("filterPane");
 	filterPane->setLayout(filterLayout);
 	filterPane->setFixedHeight(48);
-	filterPane->setStyleSheet(
-        "#filterPane { background: #1E1E1E; border-bottom: 1px solid #111; }"
-		"QLabel { font-size: 12px; margin-right: 8px; }"
-		"QPushButton[accessibleName=\"filterObj\"] { border-radius: 0; padding: 10px 8px; }"
-		"QComboBox { background: #222; border-radius: 1px; color: #BBB; padding: 0 12px; min-height: 30px; min-width: 72px; border: 1px solid #111;}"
-		"QComboBox::drop-down { border: 0; margin: 0; padding: 0; min-height: 20px; }"
-		"QComboBox::down-arrow { image: url(:/icons/down_arrow_check.png); width: 18px; height: 14px; }"
-		"QComboBox::down-arrow:!enabled { image: url(:/icons/down_arrow_check_disabled.png); width: 18px; height: 14px; }"
-		"QComboBox QAbstractItemView::item { min-height: 24px; selection-background-color: #404040; color: #cecece; }"
-        "QComboBox QAbstractItemView { background-color: #1A1A1A; selection-background-color: #404040; border: 0; outline: none; }"
-        "QComboBox QAbstractItemView::item:selected { background: #404040; }"
-	);
+	//filterPane->setStyleSheet(
+ //       "#filterPane { background: #1E1E1E; border-bottom: 1px solid #111; }"
+	//	"QLabel { font-size: 12px; margin-right: 8px; }"
+	//	"QPushButton[accessibleName=\"filterObj\"] { border-radius: 0; padding: 10px 8px; }"
+	//	"QComboBox { background: #222; border-radius: 1px; color: #BBB; padding: 0 12px; min-height: 30px; min-width: 72px; border: 1px solid #111;}"
+	//	"QComboBox::drop-down { border: 0; margin: 0; padding: 0; min-height: 20px; }"
+	//	"QComboBox::down-arrow { image: url(:/icons/down_arrow_check.png); width: 18px; height: 14px; }"
+	//	"QComboBox::down-arrow:!enabled { image: url(:/icons/down_arrow_check_disabled.png); width: 18px; height: 14px; }"
+	//	"QComboBox QAbstractItemView::item { min-height: 24px; selection-background-color: #404040; color: #cecece; }"
+ //       "QComboBox QAbstractItemView { background-color: #1A1A1A; selection-background-color: #404040; border: 0; outline: none; }"
+ //       "QComboBox QAbstractItemView::item:selected { background: #404040; }"
+	//);
 
 	auto views = new QWidget;
 	auto viewsL = new QVBoxLayout;

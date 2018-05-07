@@ -2398,6 +2398,7 @@ void MainWindow::setupDesktop()
 	pmContainer = new ProjectManager(db, this);
 	pmContainer->mainWindow = this;
 	_assetView = new AssetView(db, this);
+	_assetView->setObjectName(QStringLiteral("_assetView"));
 	_assetView->installEventFilter(this);
 
 	ui->stackedWidget->addWidget(pmContainer);
@@ -2912,6 +2913,8 @@ void MainWindow::refresh()
 	qApp->style()->polish(this);
 	file.close();
 	sceneHierarchyWidget->setStyleSheet(StyleSheet);
+	assetWidget->setStyleSheet(StyleSheet);
+	_assetView->setStyleSheet(StyleSheet);
 	qDebug() << "completed";
 
 	

@@ -105,12 +105,14 @@ AssetWidget::AssetWidget(Database *handle, QWidget *parent) : QWidget(parent), u
 	ui->breadCrumb->setLayout(breadCrumbLayout);
 	assetViewToggleButtonGroup = new QButtonGroup;
 	toggleIconView = new QPushButton(tr("Icon"));
+	toggleIconView->setObjectName(QStringLiteral("toggleIconView"));
 	toggleIconView->setCheckable(true);
 	toggleIconView->setCursor(Qt::PointingHandCursor);
 	// Todo - use preferences
 	toggleIconView->setChecked(true);
 
 	toggleListView = new QPushButton(tr("List"));
+	toggleListView->setObjectName(QStringLiteral("toggleListView"));
 	toggleListView->setCheckable(true);
 	toggleListView->setCursor(Qt::PointingHandCursor);
 
@@ -118,9 +120,11 @@ AssetWidget::AssetWidget(Database *handle, QWidget *parent) : QWidget(parent), u
 	assetViewToggleButtonGroup->addButton(toggleListView);
 
 	QHBoxLayout *toggleLayout = new QHBoxLayout;
+	QLabel *displayLabel = new QLabel(tr("Display:"));
+	displayLabel->setObjectName(QStringLiteral("displayLabel"));
 	toggleLayout->setSpacing(0);
 	toggleLayout->setSizeConstraint(QLayout::SetFixedSize);
-	toggleLayout->addWidget(new QLabel(tr("Display:")));
+	toggleLayout->addWidget(displayLabel);
 	toggleLayout->addSpacing(8);
 	toggleLayout->addWidget(toggleIconView);
 	toggleLayout->addWidget(toggleListView);
