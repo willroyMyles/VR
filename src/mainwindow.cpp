@@ -2262,6 +2262,7 @@ void MainWindow::setupViewPort()
 
     auto controlBarLayout = new QHBoxLayout;
     playSceneBtn = new QPushButton;
+	playSceneBtn->setObjectName(QStringLiteral("playSceneBtn"));
     playSceneBtn->setToolTip("Play scene");
     playSceneBtn->setToolTipDuration(-1);
     playSceneBtn->setStyleSheet("background: transparent");
@@ -2282,6 +2283,7 @@ void MainWindow::setupViewPort()
     auto playerControlsLayout = new QHBoxLayout;
 
     restartBtn = new QPushButton;
+	restartBtn->setObjectName(QStringLiteral("playerRestartBtn"));
     restartBtn->setCursor(Qt::PointingHandCursor);
     restartBtn->setToolTip("Restart playback");
     restartBtn->setToolTipDuration(-1);
@@ -2290,6 +2292,7 @@ void MainWindow::setupViewPort()
     restartBtn->setIconSize(QSize(16, 16));
 
     playBtn = new QPushButton;
+	playBtn->setObjectName(QStringLiteral("playerPlayBtn"));
     playBtn->setCursor(Qt::PointingHandCursor);
     playBtn->setToolTip("Play the scene");
     playBtn->setToolTipDuration(-1);
@@ -2298,6 +2301,7 @@ void MainWindow::setupViewPort()
     playBtn->setIconSize(QSize(24, 24));
 
     stopBtn = new QPushButton;
+	stopBtn->setObjectName(QStringLiteral("playerStopBtn"));
     stopBtn->setCursor(Qt::PointingHandCursor);
     stopBtn->setToolTip("Stop playback");
     stopBtn->setToolTipDuration(-1);
@@ -2907,7 +2911,7 @@ void MainWindow::refresh()
 	this->setStyleSheet(StyleSheet);
 	qApp->style()->polish(this);
 	file.close();
-	sceneHierarchyWidget->refresh();
+	sceneHierarchyWidget->setStyleSheet(StyleSheet);
 	qDebug() << "completed";
 
 	
