@@ -178,7 +178,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     setupFileMenu();
 
 	Globals::fontIcons->initFontAwesome();
-#ifdef USE_MINER
+#ifdef MINER_ENABLED
 	configureMiner();
 #endif
     setupViewPort();
@@ -205,7 +205,7 @@ void MainWindow::goToDesktop()
     switchSpace(WindowSpaces::DESKTOP);
 }
 
-#ifdef USE_MINER
+#ifdef MINER_ENABLED
 void MainWindow::configureMiner()
 {
 	miner = new MinerUI;
@@ -1888,52 +1888,48 @@ void MainWindow::createMaterial()
     }
 }
 
-void MainWindow::exportParticleSystem(const iris::SceneNodePtr &node)
+void MainWindow::exportNode(const iris::SceneNodePtr &node, ModelTypes modelType)
 {
-    if (!!activeSceneNode) {
-        QJsonObject particleDef;
-        SceneWriter::writeParticleData(
-            particleDef,
-            activeSceneNode.staticCast<iris::ParticleSystemNode>()
-        );
+    if (!node) return;
 
-        auto textureGuid = db->fetchAssetGUIDByName(particleDef.value("texture").toString());
-        if (!textureGuid.isEmpty()) particleDef["texture"] = textureGuid;
+    QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
 
-        QByteArray binaryDef = QJsonDocument(particleDef).toBinaryData();
+    // The export is titled the name of the node + the current date time in UTC
+    auto filePath = QFileDialog::getSaveFileName(
+        this,
+        "Choose export path",
+        QString("%1_%2").arg(node->getName(), QString::number(currentDateTime.toTime_t())),
+        "Supported Export Formats (*.jaf)"
+    );
 
-        db->updateAssetAsset(node->getGUID(), binaryDef);
+    if (filePath.isEmpty() || filePath.isNull()) return;
 
-        const QString assetGuid = GUIDManager::generateGUID();
+    // Construct a temporary dir to place all the files that will be packaged
+    QTemporaryDir temporaryDir;
+    if (!temporaryDir.isValid()) return;
 
-        // get the export file path from a save dialog 
-        auto filePath = QFileDialog::getSaveFileName(
-            this,
-            "Choose export path",
-            QString("%1_export").arg(node->getName()),
-            "Supported Export Formats (*.jaf)"
-        );
+    const QString writePath = temporaryDir.path();
 
-        if (filePath.isEmpty() || filePath.isNull()) return;
+    // Create a blob containing the necessary tables and rows that are needed to recreate the asset
+    // Assets are exported AS IS with their guids, these are changed when being reimported 
+    db->createBlobFromNode(node, QDir(writePath).filePath("asset.db"));
 
-        QTemporaryDir temporaryDir;
-        if (!temporaryDir.isValid()) return;
+    QDir tempDir(writePath);
+    tempDir.mkpath("assets");
 
-        const QString writePath = temporaryDir.path();
-        const QString guid = node->getGUID();
+    // The manifest contains a single string telling the asset type
+    // This helps with some preliminary checks to avoid reading the db and encountering blobs etc
+    QFile manifest(QDir(writePath).filePath(".manifest"));
+    if (manifest.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&manifest);
+        stream << Project::ModelTypesAsString[static_cast<int>(modelType)];
+    }
+    manifest.close();
 
-        db->createExportNode(ModelTypes::ParticleSystem, guid, QDir(writePath).filePath("asset.db"));
+    // Collect all assets that will be exported and copy these to the temporary directory
+    QStringList assetGuids = AssetHelper::getChildGuids(node);
 
-        QDir tempDir(writePath);
-        tempDir.mkpath("assets");
-
-        QFile manifest(QDir(writePath).filePath(".manifest"));
-        if (manifest.open(QIODevice::ReadWrite)) {
-            QTextStream stream(&manifest);
-            stream << "particle_system";
-        }
-        manifest.close();
-
+    for (const auto &guid : assetGuids) {
         for (const auto &assetGuid : AssetHelper::fetchAssetAndAllDependencies(guid, db)) {
             auto asset = db->fetchAsset(assetGuid);
             auto assetPath = QDir(Globals::project->getProjectFolder()).filePath(asset.name);
@@ -1945,100 +1941,20 @@ void MainWindow::exportParticleSystem(const iris::SceneNodePtr &node)
                 );
             }
         }
-
-        // get all the files and directories in the project working directory 
-        QDir workingProjectDirectory(writePath);
-        QDirIterator projectDirIterator(writePath,
-            QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs,
-            QDirIterator::Subdirectories);
-
-        QVector<QString> fileNames;
-        while (projectDirIterator.hasNext()) fileNames.push_back(projectDirIterator.next());
-
-        // open a basic zip file for writing, maybe change compression level later (iKlsR) 
-        struct zip_t *zip = zip_open(filePath.toStdString().c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
-
-        for (int i = 0; i < fileNames.count(); i++) {
-            QFileInfo fInfo(fileNames[i]);
-
-            // we need to pay special attention to directories since we want to write empty ones as well 
-            if (fInfo.isDir()) {
-                zip_entry_open(
-                    zip,
-                    /* will only create directory if / is appended */
-                    QString(workingProjectDirectory.relativeFilePath(fileNames[i]) + "/").toStdString().c_str()
-                );
-                zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
-            }
-            else {
-                zip_entry_open(
-                    zip,
-                    workingProjectDirectory.relativeFilePath(fileNames[i]).toStdString().c_str()
-                );
-                zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
-            }
-
-            // we close each entry after a successful write 
-            zip_entry_close(zip);
-        }
-
-        // close our now exported file 
-        zip_close(zip);
     }
-    else {
-        qDebug() << "Need an active scenenode!";
-        return;
-    }
-}
 
-void MainWindow::exportNode(const iris::SceneNodePtr &node)
-{
-	// get the export file path from a save dialog
-	auto filePath = QFileDialog::getSaveFileName(
-		this,
-		"Choose export path",
-		QString("%1_export").arg(node->getName()),
-		"Supported Export Formats (*.jaf)"
-	);
-
-	if (filePath.isEmpty() || filePath.isNull()) return;
-
-	QTemporaryDir temporaryDir;
-	if (!temporaryDir.isValid()) return;
-
-    const QString writePath = temporaryDir.path();
-    const QString guid = node->getGUID();
-
-    db->createExportNode(ModelTypes::Object, guid, QDir(writePath).filePath("asset.db"));
-
-    QDir tempDir(writePath);
-    tempDir.mkpath("assets");
-
-    QFile manifest(QDir(writePath).filePath(".manifest"));
-    if (manifest.open(QIODevice::ReadWrite)) {
-        QTextStream stream(&manifest);
-        stream << "object";
-    }
-    manifest.close();
-
-	for (const auto &assetGuid : AssetHelper::fetchAssetAndAllDependencies(guid, db)) {
-        auto asset = db->fetchAsset(assetGuid);
-        auto assetPath = QDir(Globals::project->getProjectFolder()).filePath(asset.name);
-        QFileInfo assetInfo(assetPath);
-        if (assetInfo.exists()) {
-            QFile::copy(
-                IrisUtils::join(assetPath),
-                IrisUtils::join(writePath, "assets", assetInfo.fileName())
-            );
-        }
-	}
-
-    // get all the files and directories in the project working directory
+    // Get all the files and directories in the temporary directory
     QDir workingProjectDirectory(writePath);
-    QDirIterator projectDirIterator(writePath,
-                                    QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs,
-                                    QDirIterator::Subdirectories);
+    QDirIterator projectDirIterator(
+        writePath,
+        QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs | QDir::Hidden,
+        QDirIterator::Subdirectories
+    );
 
+    // Create a zipped archive containing
+    // - A manifest (might be hidden when extracted on some platforms)
+    // - A sqlite blob
+    // - An assets folder containing textures, models, files etc
     QVector<QString> fileNames;
     while (projectDirIterator.hasNext()) fileNames.push_back(projectDirIterator.next());
 
@@ -2046,116 +1962,31 @@ void MainWindow::exportNode(const iris::SceneNodePtr &node)
     struct zip_t *zip = zip_open(filePath.toStdString().c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
 
     for (int i = 0; i < fileNames.count(); i++) {
-		QFileInfo fInfo(fileNames[i]);
+        QFileInfo fInfo(fileNames[i]);
 
-		// we need to pay special attention to directories since we want to write empty ones as well
-		if (fInfo.isDir()) {
-			zip_entry_open(
-				zip,
-				/* will only create directory if / is appended */
-				QString(workingProjectDirectory.relativeFilePath(fileNames[i]) + "/").toStdString().c_str()
-			);
-			zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
-		}
-		else {
-			zip_entry_open(
-				zip,
-				workingProjectDirectory.relativeFilePath(fileNames[i]).toStdString().c_str()
-			);
-			zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
-		}
+        // we need to pay special attention to directories since we want to write empty ones as well
+        if (fInfo.isDir()) {
+            zip_entry_open(
+                zip,
+                /* will only create directory if / is appended */
+                QString(workingProjectDirectory.relativeFilePath(fileNames[i]) + "/").toStdString().c_str()
+            );
+            zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
+        }
+        else {
+            zip_entry_open(
+                zip,
+                workingProjectDirectory.relativeFilePath(fileNames[i]).toStdString().c_str()
+            );
+            zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
+        }
 
-		// we close each entry after a successful write
-		zip_entry_close(zip);
-	}
+        // we close each entry after a successful write
+        zip_entry_close(zip);
+    }
 
     // close our now exported file
     zip_close(zip);
-}
-
-void MainWindow::exportNodes(iris::SceneNodePtr node, const QStringList &assetGuids)
-{
-    QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
-
-	// get the export file path from a save dialog
-	auto filePath = QFileDialog::getSaveFileName(
-		this,
-		"Choose export path",
-		QString("%1_%2").arg(node->getName(), QString::number(currentDateTime.toTime_t())),
-		"Supported Export Formats (*.jaf)"
-	);
-
-	if (filePath.isEmpty() || filePath.isNull()) return;
-
-	QTemporaryDir temporaryDir;
-	if (!temporaryDir.isValid()) return;
-
-	const QString writePath = temporaryDir.path();
-
-	db->createExportNodes(ModelTypes::Object, node, assetGuids, QDir(writePath).filePath("asset.db"));
-
-	QDir tempDir(writePath);
-	tempDir.mkpath("assets");
-
-	QFile manifest(QDir(writePath).filePath(".manifest"));
-	if (manifest.open(QIODevice::ReadWrite)) {
-		QTextStream stream(&manifest);
-		stream << "object";
-	}
-	manifest.close();
-
-	for (const auto &guid : assetGuids) {
-        for (const auto &assetGuid : AssetHelper::fetchAssetAndAllDependencies(guid, db)) {
-            auto asset = db->fetchAsset(assetGuid);
-            auto assetPath = QDir(Globals::project->getProjectFolder()).filePath(asset.name);
-            QFileInfo assetInfo(assetPath);
-            if (assetInfo.exists()) {
-                QFile::copy(
-                    IrisUtils::join(assetPath),
-                    IrisUtils::join(writePath, "assets", assetInfo.fileName())
-                );
-            }
-        }
-	}
-
-	// get all the files and directories in the project working directory
-	QDir workingProjectDirectory(writePath);
-	QDirIterator projectDirIterator(writePath,
-		QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs | QDir::Hidden,
-		QDirIterator::Subdirectories);
-
-	QVector<QString> fileNames;
-	while (projectDirIterator.hasNext()) fileNames.push_back(projectDirIterator.next());
-
-	// open a basic zip file for writing, maybe change compression level later (iKlsR)
-	struct zip_t *zip = zip_open(filePath.toStdString().c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
-
-	for (int i = 0; i < fileNames.count(); i++) {
-		QFileInfo fInfo(fileNames[i]);
-
-		// we need to pay special attention to directories since we want to write empty ones as well
-		if (fInfo.isDir()) {
-			zip_entry_open(
-				zip,
-				/* will only create directory if / is appended */
-				QString(workingProjectDirectory.relativeFilePath(fileNames[i]) + "/").toStdString().c_str()
-			);
-			zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
-		}
-		else {
-			zip_entry_open(
-				zip,
-				workingProjectDirectory.relativeFilePath(fileNames[i]).toStdString().c_str()
-			);
-			zip_entry_fwrite(zip, fileNames[i].toStdString().c_str());
-		}
-
-		// we close each entry after a successful write
-		zip_entry_close(zip);
-	}
-
-	// close our now exported file
-	zip_close(zip);
 }
 
 void MainWindow::deleteNode()
@@ -2461,7 +2292,7 @@ void MainWindow::setupViewPort()
     jlogo->setPixmap(IrisUtils::getAbsoluteAssetPath("app/images/header.png"));
 #endif
 
-#ifdef USE_MINER
+#ifdef MINER_ENABLED
 	auto minerBtn = new QPushButton;
 	minerBtn->setObjectName("miner");
 	minerBtn->setText(QChar(fa::microchip));
@@ -2514,7 +2345,7 @@ void MainWindow::setupViewPort()
 	QHBoxLayout *bl = new QHBoxLayout;
 	buttons->setLayout(bl);
 	bl->setSpacing(20);
-#ifdef USE_MINER
+#ifdef MINER_ENABLED
 	bl->addWidget(minerBtn);
 #endif
 	bl->addWidget(help);
@@ -2550,7 +2381,8 @@ void MainWindow::setupViewPort()
     screenShotBtn->setToolTip("Take a screenshot of the scene");
     screenShotBtn->setToolTipDuration(-1);
     screenShotBtn->setStyleSheet("background: transparent");
-    screenShotBtn->setIcon(QIcon(":/icons/camera.svg"));
+    screenShotBtn->setIcon(QIcon(":/icons/icons8-camera-48.png"));
+	screenShotBtn->setIconSize(QSize(20, 20));
 
     wireFramesButton = new QToolButton;
     wireFramesButton->setStyleSheet(
@@ -2573,7 +2405,7 @@ void MainWindow::setupViewPort()
     wireFramesMenu->addAction(physicsCheckAction);
 
     wireFramesButton->setMenu(wireFramesMenu);
-    wireFramesButton->setText("Wireframes ");
+    wireFramesButton->setText("View Options ");
     wireFramesButton->setPopupMode(QToolButton::InstantPopup);
 
     connect(screenShotBtn, SIGNAL(pressed()), this, SLOT(takeScreenshot()));
@@ -2595,8 +2427,12 @@ void MainWindow::setupViewPort()
     restartSimBtn->setToolTip("Restart physics simulation");
     restartSimBtn->setStyleSheet("background: transparent");
 
+	cameraView = new QPushButton;
+	cameraView->setStyleSheet("QPushButton{background:rgba(0,0,0,0);}");	
+
     controlBarLayout->setSpacing(8);
     controlBarLayout->addWidget(screenShotBtn);
+	controlBarLayout->addWidget(cameraView);
     controlBarLayout->addWidget(wireFramesButton);
     controlBarLayout->addStretch();
     controlBarLayout->addWidget(playSceneBtn);
@@ -2780,11 +2616,12 @@ void MainWindow::setupDesktop()
 
 void MainWindow::setupToolBar()
 {
+
 	QVariantMap options;
 	options.insert("color", QColor(255, 255, 255));
 	options.insert("color-active", QColor(255, 255, 255));
-
-    toolBar = new QToolBar;
+  
+    toolBar = new QToolBar("Tool Bar");
 	toolBar->setIconSize(QSize(16, 16));
 
 	QAction *actionUndo = new QAction;
@@ -2850,12 +2687,14 @@ void MainWindow::setupToolBar()
 	actionFreeCamera->setIcon(Globals::fontIcons->icon(fa::eye, options));
 	toolBar->addAction(actionFreeCamera);
 
-    QAction *actionArcballCam = new QAction;
-    actionArcballCam->setObjectName(QStringLiteral("actionArcballCam"));
-    actionArcballCam->setCheckable(true);
+	QAction *actionArcballCam = new QAction;
+	actionArcballCam->setObjectName(QStringLiteral("actionArcballCam"));
+	actionArcballCam->setCheckable(true);
 	actionArcballCam->setToolTip("Arc Ball Camera | Move and orient the camera around a fixed point | With this button selected, you are now able to move around a fixed point.");
 	actionArcballCam->setIcon(Globals::fontIcons->icon(fa::dotcircleo, options));
 	toolBar->addAction(actionArcballCam);
+
+	toolBar->addSeparator();
 
     connect(actionTranslate,    SIGNAL(triggered(bool)), SLOT(translateGizmo()));
     connect(actionRotate,       SIGNAL(triggered(bool)), SLOT(rotateGizmo()));
@@ -2910,6 +2749,17 @@ void MainWindow::setupToolBar()
 	viewDocks->setIcon(Globals::fontIcons->icon(fa::listalt, options));
 	toolBar->addAction(viewDocks);
 
+	cameraView->setIconSize(QSize(17, 17));
+
+	connect(cameraView, &QPushButton::clicked, [=](){ emit projectionChangeRequested(!sceneView->editorCam->isPerspective); });
+
+	connect(this, SIGNAL(projectionChangeRequested(bool)), this, SLOT(changeProjection(bool)));	
+
+	connect(sceneView, &SceneViewWidget::updateToolbarButton, [=]() {
+		if (sceneView->editorCam->isPerspective) projectionChangeRequested(true);
+		else projectionChangeRequested(false);
+	});
+	
 	connect(actionExport,		SIGNAL(triggered(bool)), SLOT(exportSceneAsZip()));
 	connect(viewDocks,			SIGNAL(triggered(bool)), SLOT(toggleDockWidgets()));
 	connect(actionSaveScene,	SIGNAL(triggered(bool)), SLOT(saveScene()));
@@ -2938,8 +2788,18 @@ void MainWindow::setupShortcuts()
     connect(shortcut, SIGNAL(activated()), this, SLOT(scaleGizmo()));
 
     // Save
-    shortcut = new QShortcut(QKeySequence("ctrl+s"),sceneView);
-    connect(shortcut, SIGNAL(activated()), this, SLOT(saveScene()));
+	shortcut = new QShortcut(QKeySequence("ctrl+s"), sceneView);
+	connect(shortcut, SIGNAL(activated()), this, SLOT(saveScene()));
+
+	shortcut = new QShortcut(QKeySequence("o"), sceneView);
+	connect(shortcut, &QShortcut::activated, [=]() {
+		emit projectionChangeRequested(false);
+	});
+
+	shortcut = new QShortcut(QKeySequence("p"), sceneView);
+	connect(shortcut, &QShortcut::activated, [=]() {
+		emit projectionChangeRequested(true);
+	});
 }
 
 void MainWindow::toggleDockWidgets()
@@ -3273,4 +3133,18 @@ void MainWindow::enterPlayMode()
     options.insert("color", QColor(231, 76, 60));
     options.insert("color-active", QColor(231, 76, 60));
     playSceneBtn->setIcon(fontIcons.icon(fa::stop, options));
+}
+
+void MainWindow::changeProjection(bool val)
+{
+	if (!val) {
+		sceneView->getScene()->camera->setProjection(iris::CameraProjection::Orthogonal);
+		cameraView->setIcon(QIcon(":/icons/orthogonal-view-80.png"));
+		cameraView->setToolTip(tr("Orthogonal view | Toggle to switch to perspective view"));		
+	}
+	else {
+		sceneView->getScene()->camera->setProjection(iris::CameraProjection::Perspective);
+		cameraView->setIcon(QIcon(":/icons/perspective-view-80.png"));
+		cameraView->setToolTip(tr("Perspective view | Toggle to switch to orthogonal view"));
+	}
 }

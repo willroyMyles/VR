@@ -29,6 +29,7 @@ For more information see the LICENSE file
 #include "misc/QtAwesome.h"
 #include "misc/QtAwesomeAnim.h"
 #include "miner/minerui.h"
+#include "core/project.h"
 
 namespace Ui {
     class MainWindow;
@@ -227,7 +228,7 @@ public:
 
 private:
 	//set up miner
-#ifdef USE_MINER
+#ifdef MINER_ENABLED
 	void configureMiner();
 #endif
 
@@ -301,9 +302,7 @@ public slots:
     //context menu functions
     void duplicateNode();
 	void createMaterial();
-	void exportNode(const iris::SceneNodePtr &node);
-	void exportNodes(iris::SceneNodePtr node, const QStringList &assetGuids);
-    void exportParticleSystem(const iris::SceneNodePtr &node);
+	void exportNode(const iris::SceneNodePtr &node, ModelTypes modelType);
     void deleteNode();
 
     void addPointLight();
@@ -357,6 +356,9 @@ public slots:
     void toggleDebugDrawer(bool state);
     void showProjectManagerInternal();
 
+signals:
+	void projectionChangeRequested(bool val);
+
 private slots:
     void translateGizmo();
     void rotateGizmo();
@@ -365,6 +367,8 @@ private slots:
     void onPlaySceneButton();
     void enterEditMode();
     void enterPlayMode();
+
+	void changeProjection(bool val);
 
 private:
     Ui::MainWindow *ui;
@@ -479,6 +483,8 @@ private:
     AssetFavorites *assetFavorites;
     AssetModelPanel *assetModelPanel;
     AssetMaterialPanel *assetMaterialPanel;
+
+	QPushButton *cameraView;
 };
 
 #endif // MAINWINDOW_H
