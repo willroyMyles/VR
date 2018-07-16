@@ -301,25 +301,17 @@ iris::ScenePtr MainWindow::createDefaultScene()
     );
 
     {
+        // Make the default plane a static physics object
+        iris::PhysicsProperty physicsProperties;
+        physicsProperties.objectMass = .0f;
+        physicsProperties.isStatic = true;
+        physicsProperties.objectCollisionMargin = .1f;
+        physicsProperties.objectRestitution = .01f;
+        physicsProperties.type = iris::PhysicsType::Static;
+        physicsProperties.shape = iris::PhysicsCollisionShape::Plane;
+
         node->isPhysicsBody = true;
-
-        btVector3 pos(node->getLocalPos().x(), node->getLocalPos().y(), node->getLocalPos().z());
-
-        btTransform transform;
-        transform.setIdentity();
-        transform.setOrigin(pos);
-
-        auto mass = 0.f;
-
-        btCollisionShape *plane = new btStaticPlaneShape(btVector3(0, 1, 0), 0.f);
-        btMotionState *motion = new btDefaultMotionState(transform);
-
-        btRigidBody::btRigidBodyConstructionInfo info(mass, motion, plane);
-
-        btRigidBody *body = new btRigidBody(info);
-        body->setRestitution(0.5f);
-
-        scene->getPhysicsEnvironment()->addBodyToWorld(body, node->getGUID());
+        node->physicsProperty = physicsProperties;
     }
 
 	// if we reached this far, the project dir has already been created
@@ -405,7 +397,7 @@ void MainWindow::initializePhysicsWorld()
     for (const auto &node : scene->getRootNode()->children) {
         if (node->isPhysicsBody) {
             auto body = iris::PhysicsHelper::createPhysicsBody(node, node->physicsProperty);
-            if (body) sceneView->addBodyToWorld(body, node->getGUID());
+            if (body) sceneView->addBodyToWorld(body, node);
         }
     }
 
@@ -641,7 +633,7 @@ void MainWindow::switchSpace(WindowSpaces space)
         case WindowSpaces::DESKTOP: {
 			if (UiManager::isSceneOpen) {
 				//if (settings->getValue("auto_save", true).toBool()) saveScene();
-				saveScene();
+				//saveScene();
 				pmContainer->populateDesktop(true);
 			}
 			
@@ -815,8 +807,6 @@ void MainWindow::openProject(bool playMode)
     ui->actionClose->setDisabled(false);
     setScene(scene);
 
-    initializePhysicsWorld();
-
     // use new post process that has fxaa by default
     // TODO: remember to find a better replacement (Nick)
     postProcessWidget->setPostProcessMgr(postMan);
@@ -843,10 +833,33 @@ void MainWindow::openProject(bool playMode)
 
 void MainWindow::closeProject()
 {
-	if (UiManager::isSceneOpen) {
-		//if (settings->getValue("auto_save", true).toBool()) saveScene();
-        saveScene();
-	}
+    {
+        scene->getPhysicsEnvironment()->stopPhysics();
+        scene->getPhysicsEnvironment()->stopSimulation();
+
+        if (!scene->getPhysicsEnvironment()->nodeTransforms.isEmpty()) {
+            for (const auto &node : scene->getRootNode()->children) {
+                if (node->isPhysicsBody) {
+                    node->setGlobalTransform(scene->getPhysicsEnvironment()->nodeTransforms.value(node->getGUID()));
+                }
+            }
+        }
+
+        if (UiManager::isSceneOpen) {
+            if (settings->getValue("auto_save", true).toBool()) saveScene();
+        }
+
+        scene->getPhysicsEnvironment()->destroyPhysicsWorld();
+
+        //UiManager::stopPhysicsSimulation();
+        playSimBtn->setText("Simulate Physics");
+        playSimBtn->setToolTip("Simulate physics only");
+
+        QVariantMap options;
+        options.insert("color", QColor(52, 152, 219));
+        options.insert("color-active", QColor(52, 152, 219));
+        playSimBtn->setIcon(fontIcons.icon(fa::play, options));
+    }
 
     UiManager::isSceneOpen = false;
     UiManager::isScenePlaying = false;
@@ -2260,7 +2273,7 @@ void MainWindow::setupViewPort()
 {
 	// ui->MenuBar->setVisible(false);
 
-	worlds_menu = new QPushButton("Worlds");
+	worlds_menu = new QPushButton("Scenes");
 	worlds_menu->setObjectName("worlds_menu");
 	worlds_menu->setCursor(Qt::PointingHandCursor);
 	player_menu = new QPushButton("Player");
@@ -2302,9 +2315,13 @@ void MainWindow::setupViewPort()
 #ifdef MINER_ENABLED
 	auto minerBtn = new QPushButton;
 	minerBtn->setObjectName("miner");
-	minerBtn->setText(QChar(fa::microchip));
-	minerBtn->setFont(fontIcons.font(24));
+	minerBtn->setIcon(QIcon(":/icons/mining.png"));
+	minerBtn->setIconSize(QSize(26,26));
+	minerBtn->setStyleSheet("background:transparent;");
+	/*minerBtn->setText(QChar(fa::microchip));
+	minerBtn->setFont(fontIcons.font(24));*/
 	minerBtn->setCursor(Qt::PointingHandCursor);
+	//minerBtn->setStyleSheet("QPushButton{color:orange;}");
 	connect(minerBtn, &QPushButton::pressed, [this]() {
 		miner->show();
 	});
@@ -2430,10 +2447,6 @@ void MainWindow::setupViewPort()
 	playSimBtn->setToolTip("Simulate physics only");
 	playSimBtn->setStyleSheet("background: transparent");
 
-    restartSimBtn = new QPushButton(Globals::fontIcons->icon(fa::undo, options), "Restart Physics");
-    restartSimBtn->setToolTip("Restart physics simulation");
-    restartSimBtn->setStyleSheet("background: transparent");
-
 	cameraView = new QPushButton;
 	cameraView->setStyleSheet("QPushButton{background:rgba(0,0,0,0);}");	
 
@@ -2445,8 +2458,6 @@ void MainWindow::setupViewPort()
     controlBarLayout->addWidget(playSceneBtn);
     controlBarLayout->addSpacing(2);
 	controlBarLayout->addWidget(playSimBtn);
-    controlBarLayout->addSpacing(2);
-	controlBarLayout->addWidget(restartSimBtn);
 
     controlBar->setLayout(controlBarLayout);
     controlBar->setStyleSheet("#controlBar {  background: #1E1E1E; border-bottom: 1px solid black; }");
@@ -2518,16 +2529,28 @@ void MainWindow::setupViewPort()
         QVariantMap options;
 
 		if (UiManager::isSimulationRunning) {
+            initializePhysicsWorld();
 			UiManager::startPhysicsSimulation();
+
             playSimBtn->setText("Stop Simulation");
 			playSimBtn->setToolTip("Pause physics simulation");
 
             options.insert("color", QColor(241, 196, 15));
             options.insert("color-active", QColor(241, 196, 15));
-            playSimBtn->setIcon(fontIcons.icon(fa::pause, options));
+            playSimBtn->setIcon(fontIcons.icon(fa::stop, options));
 		}
 		else {
-			UiManager::stopPhysicsSimulation();
+            UiManager::restartPhysicsSimulation();
+
+            if (!scene->getPhysicsEnvironment()->nodeTransforms.isEmpty()) {
+                for (const auto &node : scene->getRootNode()->children) {
+                    if (node->isPhysicsBody) {
+                        node->setGlobalTransform(scene->getPhysicsEnvironment()->nodeTransforms.value(node->getGUID()));
+                    }
+                }
+            }
+
+			//UiManager::stopPhysicsSimulation();
             playSimBtn->setText("Simulate Physics");
 			playSimBtn->setToolTip("Simulate physics only");
 
@@ -2535,12 +2558,9 @@ void MainWindow::setupViewPort()
             options.insert("color-active", QColor(52, 152, 219));
             playSimBtn->setIcon(fontIcons.icon(fa::play, options));
 		}
-	});
 
-    connect(restartSimBtn, &QPushButton::pressed, [this]() {
-        UiManager::restartPhysicsSimulation();
-        initializePhysicsWorld();
-    });
+        if (!!activeSceneNode) sceneNodeSelected(activeSceneNode);
+	});
 
     playerControls->setLayout(playerControlsLayout);
 
@@ -3028,7 +3048,6 @@ void MainWindow::showProjectManagerInternal()
     if (UiManager::isScenePlaying) enterEditMode();
     hide();
     pmContainer->populateDesktop(true);
-    //pmContainer->showMaximized();
     pmContainer->cleanupOnClose();
 }
 

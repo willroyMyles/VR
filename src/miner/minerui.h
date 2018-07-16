@@ -33,6 +33,8 @@ For more information see the LICENSE file
 #include "minerprocess.h"
 #include "minerchart.h"
 
+#include "../src/subclass/switch.h"
+
 
 class QtAwesome;
 class Dot : public QWidget {
@@ -60,7 +62,7 @@ private:
 	QColor color;
 };
 
-class MSwitch;
+class Switch;
 class GraphicsCardUI : public QWidget
 {
 	Q_OBJECT
@@ -71,6 +73,8 @@ public:
 		configureConnections();
 		setColor((int)Connection::NOTCONNECTED);
 		contract();
+		switchBtn->simulateClick();
+
 
 	}
 
@@ -109,6 +113,7 @@ public:
 	}
 
 	void setStarted(bool val) {
+
 		if (armed && val)
 		{
 			mining = val;
@@ -197,7 +202,7 @@ private:
 	QWidget *additional;
 	QColor color;
 	QLabel *cardName, *pool, *speed, *displayLabel;
-	MSwitch *switchBtn;
+	Switch *switchBtn;
 	Dot *dot;
 	QPushButton *logo;
 	QString oldString;
@@ -286,9 +291,9 @@ private:
 		pool->setFont(font);
 		speed->setFont(font);
 
-		switchBtn = new MSwitch();
+		switchBtn = new Switch();
 		switchBtn->setColor(QColor(40, 128, 185));
-		switchBtn->setSizeOfSwitch(22);
+		switchBtn->setSize(22);
 		sliderLayout->addStretch();
 		sliderLayout->addWidget(switchBtn);
 		sliderLayout->addStretch();
@@ -364,11 +369,11 @@ private:
 
 	void configureConnections() {
 
-		connect(switchBtn, &MSwitch::switchPressed, [this](bool val) {
+		connect(switchBtn, &Switch::onChanged, [this](bool val) {
 			emit switchIsOn(val);
 			armed = val;
 		//	logo->setChecked(val);
-			displayLabel->setText(val ? "GPU set to mined" : "GPU is not set to mine");
+			displayLabel->setText(val ? "GPU set to mine" : "GPU is not set to mine");
 			oldString = displayLabel->text();
 		});
 
@@ -388,8 +393,9 @@ private:
 		//});
 
 		connect(logo, &QPushButton::clicked, [=]() {
-			logo->setChecked(false);
-			switchBtn->toggle();
+			logo->setChecked(!switchBtn->on());
+			qDebug() << switchBtn->on();
+			switchBtn->simulateClick();
 		});
 
 
@@ -450,7 +456,7 @@ private:
 	QLabel *coinType, *autostart;
 	QAction *settings, *close;
 	QAction *advance;
-	MSwitch *autoStartSwitch;
+	Switch *autoStartSwitch;
 	QAction *back;
 	QComboBox *currency;
 	QLineEdit *walletEdit, *passwordEdit, *poolEdit, *identifierEdit;

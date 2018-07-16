@@ -161,8 +161,9 @@ bool MinerManager::initialize()
 	for (auto gpu : list) {
 		auto proc = new MinerProcess(this);
 		proc->setGpu(gpu);
-		proc->setNetworkPort(portNum++);
+		proc->setNetworkPort(portNum);
 		processes.append(proc);
+		portNum += 1;
 	}
 
 	return true;
@@ -179,16 +180,6 @@ void MinerProcess::startMining()
 {
 	QDir basePath = QDir(QCoreApplication::applicationDirPath());
 	auto xmrPath = QDir::cleanPath(basePath.absolutePath() + QDir::separator() + "xmr-stak/xmr-stak.exe");
-	if (!QFile::exists(xmrPath)) {
-
-#if defined QT_DEBUG
-		QMessageBox::warning(nullptr, "xmrstak not found!", "xmrstak is missing or hasnt been compiled.");
-#else
-		QMessageBox::warning(nullptr, "xmrstak not found!", "xmrstak is missing");
-#endif	
-		return;
-	}
-
 
 	process = new QProcess();
 	QStringList args;
