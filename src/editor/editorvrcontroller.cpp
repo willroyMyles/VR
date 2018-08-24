@@ -54,7 +54,7 @@ public:
 		//this->renderStates.rasterState.depthBias = 1;// this ensures it's always on top
 		//this->renderStates.rasterState.depthScaleBias = 1;// this ensures it's always on top
 
-		color = QColor(255, 0, 0); 
+		color = QColor(41, 128, 185); 
 		fresnelPow = 5;
 	}
 
@@ -126,11 +126,16 @@ void EditorVrController::update(float dt)
     vrDevice = iris::VrManager::getDefaultDevice();
     const float linearSpeed = 10.4f * dt;
 
+	// lock rot to yaw so user is always right side up
+	auto yaw = camera->getLocalRot().toEulerAngles().y();
+	auto yawRot = QQuaternion::fromEulerAngles(0, yaw, 0);
+	camera->setLocalRot(yawRot);
+
     // keyboard movement
     const QVector3D upVector(0, 1, 0);
     //not giving proper rotation when not in debug mode
     //apparently i need to normalize the head rotation quaternion
-    auto rot = vrDevice->getHeadRotation();
+    auto rot = yawRot * vrDevice->getHeadRotation();
     rot.normalize();
     auto forwardVector = rot.rotatedVector(QVector3D(0, 0, -1));
     auto x = QVector3D::crossProduct(forwardVector,upVector).normalized();
@@ -155,128 +160,132 @@ void EditorVrController::update(float dt)
 
     camera->setLocalPos(camPos);
 
+	
+
     // touch controls
 
 	// LEFT CONTROLLER
     auto leftTouch = vrDevice->getTouchController(0);
     if (leftTouch->isTracking()) {
-        auto dir = leftTouch->GetThumbstick();
-        camPos += x * linearSpeed * dir.x() * 2;
-        camPos += z * linearSpeed * dir.y() * 2;
+
+		auto dir = leftTouch->GetThumbstick();
+		camPos += x * linearSpeed * dir.x() * 2;
+		camPos += z * linearSpeed * dir.y() * 2;
 
 
-        if(leftTouch->isButtonDown(iris::VrTouchInput::Y))
-            camPos += QVector3D(0, linearSpeed, 0);
-        if(leftTouch->isButtonDown(iris::VrTouchInput::X))
-            camPos += QVector3D(0, -linearSpeed, 0);
+		if (leftTouch->isButtonDown(iris::VrTouchInput::Y))
+			camPos += QVector3D(0, linearSpeed, 0);
+		if (leftTouch->isButtonDown(iris::VrTouchInput::X))
+			camPos += QVector3D(0, -linearSpeed, 0);
 
-        camera->setLocalPos(camPos);
-        camera->setLocalRot(QQuaternion());
-        camera->update(0);
-
-
-        // Submit items to renderer
-        auto device = iris::VrManager::getDefaultDevice();
-
-        QMatrix4x4 world;
-        world.setToIdentity();
-        world.translate(device->getHandPosition(0));
-        world.rotate(device->getHandRotation(0));
-        //world.scale(0.55f);
-        leftHandRenderItem->worldMatrix = camera->globalTransform * world;
-        leftBeamRenderItem->worldMatrix = leftHandRenderItem->worldMatrix;
+		camera->setLocalPos(camPos);
+		//camera->setLocalRot(QQuaternion());
+		camera->update(0);
 
 
-        world.setToIdentity();
-        world.translate(device->getHandPosition(1));
-        world.rotate(device->getHandRotation(1));
-        //world.scale(0.55f);
-        rightHandRenderItem->worldMatrix = camera->globalTransform * world;
-        rightBeamRenderItem->worldMatrix = rightHandRenderItem->worldMatrix;
+		// Submit items to renderer
+		auto device = iris::VrManager::getDefaultDevice();
+
+		QMatrix4x4 world;
+		world.setToIdentity();
+		world.translate(device->getHandPosition(0));
+		world.rotate(device->getHandRotation(0));
+		//world.scale(0.55f);
+		leftHandRenderItem->worldMatrix = camera->globalTransform * world;
+		leftBeamRenderItem->worldMatrix = leftHandRenderItem->worldMatrix;
 
 
-        // Handle picking and movement of picked objects
-        iris::PickingResult pick;
-        if (rayCastToScene(leftHandRenderItem->worldMatrix, pick)) {
-            auto dist = qSqrt(pick.distanceFromStartSqrd);
-            //qDebug() << "hit at dist: " << dist;
-            leftBeamRenderItem->worldMatrix.scale(1, 1, dist /* * (1.0f / 0.55f )*/);// todo: remove magic 0.55
-			leftHoveredNode = getObjectRoot(pick.hitNode);
+		if (UiManager::sceneMode == SceneMode::EditMode) {
 
-            // Pick a node if the trigger is down
-            if (leftTouch->getIndexTrigger() > 0.1f && !leftPickedNode)
-            {
-				leftPickedNode = leftHoveredNode;
-				leftPos = leftPickedNode->getLocalPos();
-				leftRot = leftPickedNode->getLocalRot();
-				leftScale = leftPickedNode->getLocalScale();
+			// Handle picking and movement of picked objects
+			iris::PickingResult pick;
+			if (rayCastToScene(leftHandRenderItem->worldMatrix, pick)) {
+				auto dist = qSqrt(pick.distanceFromStartSqrd);
+				//qDebug() << "hit at dist: " << dist;
+				leftBeamRenderItem->worldMatrix.scale(1, 1, dist /* * (1.0f / 0.55f )*/);// todo: remove magic 0.55
+				leftHoveredNode = getObjectRoot(pick.hitNode);
 
-                //calculate offset
-                //leftNodeOffset = leftPickedNode->getGlobalTransform() * leftHandRenderItem->worldMatrix.inverted();
-                leftNodeOffset =  leftHandRenderItem->worldMatrix.inverted() * leftPickedNode->getGlobalTransform();
-            }
+				// Pick a node if the trigger is down
+				if (leftTouch->getIndexTrigger() > 0.1f && !leftPickedNode)
+				{
+					leftPickedNode = leftHoveredNode;
+					leftPos = leftPickedNode->getLocalPos();
+					leftRot = leftPickedNode->getLocalRot();
+					leftScale = leftPickedNode->getLocalScale();
 
-        }
-        else
-        {
-            leftBeamRenderItem->worldMatrix.scale(1, 1, 100.f * (1.0f / 0.55f ));
-			leftHoveredNode.clear();
-        }
+					//calculate offset
+					//leftNodeOffset = leftPickedNode->getGlobalTransform() * leftHandRenderItem->worldMatrix.inverted();
+					leftNodeOffset = leftHandRenderItem->worldMatrix.inverted() * leftPickedNode->getGlobalTransform();
+				}
 
-        if(leftTouch->getIndexTrigger() < 0.1f && !!leftPickedNode)
-        {
-			// add to undo
-			auto newPos = leftPickedNode->getLocalPos();
-			auto cmd = new TransformSceneNodeCommand(leftPickedNode,
-												     leftPos, leftRot, leftScale,
-													 leftPickedNode->getLocalPos(), leftPickedNode->getLocalRot(), leftPickedNode->getLocalScale());
-			UiManager::pushUndoStack(cmd);
+			}
+			else
+			{
+				leftBeamRenderItem->worldMatrix.scale(1, 1, 100.f * (1.0f / 0.55f));
+				leftHoveredNode.clear();
+			}
 
-            // release node
-            leftPickedNode.clear();
-            leftNodeOffset.setToIdentity(); // why bother?
-        }
+			if (leftTouch->getIndexTrigger() < 0.1f && !!leftPickedNode)
+			{
+				// add to undo
+				auto newPos = leftPickedNode->getLocalPos();
+				auto cmd = new TransformSceneNodeCommand(leftPickedNode,
+					leftPos, leftRot, leftScale,
+					leftPickedNode->getLocalPos(), leftPickedNode->getLocalRot(), leftPickedNode->getLocalScale());
+				UiManager::pushUndoStack(cmd);
 
-        // update picked node
-        if (!!leftPickedNode) {
-            // calculate the global position
-            auto nodeGlobal = leftHandRenderItem->worldMatrix * leftNodeOffset;
+				// release node
+				leftPickedNode.clear();
+				leftNodeOffset.setToIdentity(); // why bother?
+			}
 
-            // calculate position relative to parent
-            auto localTransform = leftPickedNode->parent->getGlobalTransform().inverted() * nodeGlobal;
+			// update picked node
+			if (!!leftPickedNode) {
+				// calculate the global position
+				auto nodeGlobal = leftHandRenderItem->worldMatrix * leftNodeOffset;
 
-            QVector3D pos, scale;
-            QQuaternion rot;
-            // decompose matrix to assign pos, rot and scale
-            iris::MathHelper::decomposeMatrix(localTransform,
-                                              pos,
-                                              rot,
-                                              scale);
+				// calculate position relative to parent
+				auto localTransform = leftPickedNode->parent->getGlobalTransform().inverted() * nodeGlobal;
 
-            leftPickedNode->setLocalPos(pos);
-            rot.normalize();
-            leftPickedNode->setLocalRot(rot);
-            leftPickedNode->setLocalScale(scale);
+				QVector3D pos, scale;
+				QQuaternion rot;
+				// decompose matrix to assign pos, rot and scale
+				iris::MathHelper::decomposeMatrix(localTransform,
+					pos,
+					rot,
+					scale);
+
+				leftPickedNode->setLocalPos(pos);
+				rot.normalize();
+				leftPickedNode->setLocalRot(rot);
+				leftPickedNode->setLocalScale(scale);
 
 
-            // @todo: force recalculatioin of global transform
-            // leftPickedNode->update(0);// bad!
-            // it wil be updated a frame later, no need to stress over this
-        }
+				// @todo: force recalculatioin of global transform
+				// leftPickedNode->update(0);// bad!
+				// it wil be updated a frame later, no need to stress over this
+			}
 
-        if (rayCastToScene(rightBeamRenderItem->worldMatrix, pick)) {
-            auto dist = qSqrt(pick.distanceFromStartSqrd);
-            rightBeamRenderItem->worldMatrix.scale(1, 1,(dist /*  * (1.0f / 0.55f )*/));// todo: remove magic 0.55
-        }
+			if (rayCastToScene(rightBeamRenderItem->worldMatrix, pick)) {
+				auto dist = qSqrt(pick.distanceFromStartSqrd);
+				rightBeamRenderItem->worldMatrix.scale(1, 1, (dist /*  * (1.0f / 0.55f )*/));// todo: remove magic 0.55
+			}
 
-        scene->geometryRenderList->add(leftHandRenderItem);
-        scene->geometryRenderList->add(leftBeamRenderItem);
+			scene->geometryRenderList->add(leftHandRenderItem);
+			scene->geometryRenderList->add(leftBeamRenderItem);
+		}
+		else
+		{
+			// submit only the right hand in render mode
+			scene->geometryRenderList->add(leftHandRenderItem);
+		}
     }
 
 
 	// RIGHT CONTROLLER
 	auto rightTouch = vrDevice->getTouchController(1);
 	if (rightTouch->isTracking()) {
+		
 		// Submit items to renderer
 		auto device = iris::VrManager::getDefaultDevice();
 
@@ -288,100 +297,99 @@ void EditorVrController::update(float dt)
 		rightHandRenderItem->worldMatrix = camera->globalTransform * world;
 		rightBeamRenderItem->worldMatrix = rightHandRenderItem->worldMatrix;
 
+		if (UiManager::sceneMode == SceneMode::EditMode) {
+			// Handle picking and movement of picked objects
+			iris::PickingResult pick;
+			if (rayCastToScene(rightHandRenderItem->worldMatrix, pick)) {
+				auto dist = qSqrt(pick.distanceFromStartSqrd);
+				//qDebug() << "hit at dist: " << dist;
+				rightBeamRenderItem->worldMatrix.scale(1, 1, dist /* * (1.0f / 0.55f )*/);// todo: remove magic 0.55
+				rightHoveredNode = getObjectRoot(pick.hitNode);
+				// Pick a node if the trigger is down
+				if (rightTouch->getIndexTrigger() > 0.1f && !rightPickedNode)
+				{
+					rightPickedNode = rightHoveredNode;
+					rightPos = rightPickedNode->getLocalPos();
+					rightRot = rightPickedNode->getLocalRot();
+					rightScale = rightPickedNode->getLocalScale();
 
-		world.setToIdentity();
-		world.translate(device->getHandPosition(1));
-		world.rotate(device->getHandRotation(1));
-		//world.scale(0.55f);
-		rightHandRenderItem->worldMatrix = camera->globalTransform * world;
-		rightBeamRenderItem->worldMatrix = rightHandRenderItem->worldMatrix;
+					//calculate offset
+					//leftNodeOffset = leftPickedNode->getGlobalTransform() * leftHandRenderItem->worldMatrix.inverted();
+					rightNodeOffset = rightHandRenderItem->worldMatrix.inverted() * rightPickedNode->getGlobalTransform();
+				}
 
-
-		// Handle picking and movement of picked objects
-		iris::PickingResult pick;
-		if (rayCastToScene(rightHandRenderItem->worldMatrix, pick)) {
-			auto dist = qSqrt(pick.distanceFromStartSqrd);
-			//qDebug() << "hit at dist: " << dist;
-			rightBeamRenderItem->worldMatrix.scale(1, 1, dist /* * (1.0f / 0.55f )*/);// todo: remove magic 0.55
-			rightHoveredNode = getObjectRoot(pick.hitNode);
-																					 // Pick a node if the trigger is down
-			if (rightTouch->getIndexTrigger() > 0.1f && !rightPickedNode)
+			}
+			else
 			{
-				rightPickedNode = rightHoveredNode;
-				rightPos = rightPickedNode->getLocalPos();
-				rightRot = rightPickedNode->getLocalRot();
-				rightScale = rightPickedNode->getLocalScale();
-
-				//calculate offset
-				//leftNodeOffset = leftPickedNode->getGlobalTransform() * leftHandRenderItem->worldMatrix.inverted();
-				rightNodeOffset = rightHandRenderItem->worldMatrix.inverted() * rightPickedNode->getGlobalTransform();
+				rightBeamRenderItem->worldMatrix.scale(1, 1, 100.f * (1.0f / 0.55f));
+				rightHoveredNode.clear();
 			}
 
-		}
-		else
-		{
-			rightBeamRenderItem->worldMatrix.scale(1, 1, 100.f * (1.0f / 0.55f));
-			rightHoveredNode.clear();
-		}
+			// trigger released
+			if (rightTouch->getIndexTrigger() < 0.1f && !!rightPickedNode)
+			{
+				// add to undo
+				auto newPos = rightPickedNode->getLocalPos();
+				auto cmd = new TransformSceneNodeCommand(rightPickedNode,
+					leftPos, leftRot, leftScale,
+					rightPickedNode->getLocalPos(), rightPickedNode->getLocalRot(), rightPickedNode->getLocalScale());
+				UiManager::pushUndoStack(cmd);
 
-		// trigger released
-		if (rightTouch->getIndexTrigger() < 0.1f && !!rightPickedNode)
-		{
-			// add to undo
-			auto newPos = rightPickedNode->getLocalPos();
-			auto cmd = new TransformSceneNodeCommand(rightPickedNode,
-				leftPos, leftRot, leftScale,
-				rightPickedNode->getLocalPos(), rightPickedNode->getLocalRot(), rightPickedNode->getLocalScale());
-			UiManager::pushUndoStack(cmd);
+				// release node
+				rightPickedNode.clear();
+				rightNodeOffset.setToIdentity(); // why bother?
+			}
 
-			// release node
-			rightPickedNode.clear();
-			rightNodeOffset.setToIdentity(); // why bother?
-		}
+			// update picked node
+			if (!!rightPickedNode) {
+				// calculate the global position
+				auto nodeGlobal = rightHandRenderItem->worldMatrix * rightNodeOffset;
 
-		// update picked node
-		if (!!rightPickedNode) {
-			// calculate the global position
-			auto nodeGlobal = rightHandRenderItem->worldMatrix * rightNodeOffset;
+				// calculate position relative to parent
+				auto localTransform = rightPickedNode->parent->getGlobalTransform().inverted() * nodeGlobal;
 
-			// calculate position relative to parent
-			auto localTransform = rightPickedNode->parent->getGlobalTransform().inverted() * nodeGlobal;
+				QVector3D pos, scale;
+				QQuaternion rot;
+				// decompose matrix to assign pos, rot and scale
+				iris::MathHelper::decomposeMatrix(localTransform,
+					pos,
+					rot,
+					scale);
 
-			QVector3D pos, scale;
-			QQuaternion rot;
-			// decompose matrix to assign pos, rot and scale
-			iris::MathHelper::decomposeMatrix(localTransform,
-				pos,
-				rot,
-				scale);
-
-			rightPickedNode->setLocalPos(pos);
-			rot.normalize();
-			rightPickedNode->setLocalRot(rot);
-			rightPickedNode->setLocalScale(scale);
+				rightPickedNode->setLocalPos(pos);
+				rot.normalize();
+				rightPickedNode->setLocalRot(rot);
+				rightPickedNode->setLocalScale(scale);
 
 
-			// @todo: force recalculatioin of global transform
-			// leftPickedNode->update(0);// bad!
-			// it wil be updated a frame later, no need to stress over this
+				// @todo: force recalculatioin of global transform
+				// leftPickedNode->update(0);// bad!
+				// it wil be updated a frame later, no need to stress over this
+			}
+			/*
+			if (rayCastToScene(rightBeamRenderItem->worldMatrix, pick)) {
+				auto dist = qSqrt(pick.distanceFromStartSqrd);
+				rightBeamRenderItem->worldMatrix.scale(1, 1, (dist);// todo: remove magic 0.55
+			}
+			*/
+
+			scene->geometryRenderList->add(rightBeamRenderItem);
+			scene->geometryRenderList->add(rightHandRenderItem);
 		}
 		/*
-		if (rayCastToScene(rightBeamRenderItem->worldMatrix, pick)) {
-			auto dist = qSqrt(pick.distanceFromStartSqrd);
-			rightBeamRenderItem->worldMatrix.scale(1, 1, (dist);// todo: remove magic 0.55
+		auto rightTouch = vrDevice->getTouchController(1);
+		if (rightTouch->isTracking()) {
+			scene->geometryRenderList->add(leftBeamRenderItem);
+			scene->geometryRenderList->add(rightBeamRenderItem);
 		}
 		*/
 
-		scene->geometryRenderList->add(rightBeamRenderItem);
-		scene->geometryRenderList->add(rightHandRenderItem);
+		else {
+			// submit only the right hand in render mode
+			scene->geometryRenderList->add(rightHandRenderItem);
+		}
 	}
-	/*
-    auto rightTouch = vrDevice->getTouchController(1);
-    if (rightTouch->isTracking()) {
-        scene->geometryRenderList->add(leftBeamRenderItem);
-        scene->geometryRenderList->add(rightBeamRenderItem);
-    }
-	*/
+	
 
 	submitHoveredNodes();
 }
@@ -415,12 +423,15 @@ iris::SceneNodePtr EditorVrController::getObjectRoot(iris::SceneNodePtr node)
 
 void EditorVrController::submitHoveredNodes()
 {
-	if (!rightPickedNode && !!rightHoveredNode) {
-		submitHoveredNode(rightHoveredNode);
-	}
+	// only do this in edit mode
+	if (UiManager::sceneMode == SceneMode::EditMode) {
+		if (!rightPickedNode && !!rightHoveredNode) {
+			submitHoveredNode(rightHoveredNode);
+		}
 
-	if (!leftPickedNode && !!leftHoveredNode) {
-		submitHoveredNode(leftHoveredNode);
+		if (!leftPickedNode && !!leftHoveredNode) {
+			submitHoveredNode(leftHoveredNode);
+		}
 	}
 }
 

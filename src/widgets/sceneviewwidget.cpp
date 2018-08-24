@@ -666,7 +666,8 @@ void SceneViewWidget::renderScene()
 		//animPath->submit(scene->geometryRenderList);
 
         // insert vr head
-        if ((UiManager::sceneMode == SceneMode::EditMode && viewportMode == ViewportMode::Editor)) {
+		//if ((UiManager::sceneMode == SceneMode::EditMode && viewportMode == ViewportMode::Editor)) {
+		if (UiManager::sceneMode == SceneMode::EditMode) {
             renderer->renderLightBillboards = true;
         } else {
             renderer->renderLightBillboards = false;
@@ -688,7 +689,8 @@ void SceneViewWidget::renderScene()
             }
         }
 
-		if (UiManager::sceneMode == SceneMode::EditMode && viewportMode == ViewportMode::Editor)
+		//if (UiManager::sceneMode == SceneMode::EditMode && viewportMode == ViewportMode::Editor)
+		if (UiManager::sceneMode == SceneMode::EditMode)
 			addViewerHeadsToScene();
 
         if (viewportMode == ViewportMode::Editor) {
@@ -1588,7 +1590,13 @@ void SceneViewWidget::stopPlayingScene()
 
 		scene->updateSceneAnimation(0.0f);
 
-		restorePreviousCameraController();
+		// quick fix for the odd case when the user switched from the
+		// player to editor while having the vr headset on
+		// and the user get stuck with the viewer cam
+		if (this->prevCamController == viewerCam)
+			this->setCameraController(defaultCam);
+		else
+			this->restorePreviousCameraController();
 	}
 }
 
