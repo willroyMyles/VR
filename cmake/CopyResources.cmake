@@ -21,17 +21,17 @@ endmacro()
 set(DataDirs app assets scenes)
 foreach(dir ${DataDirs})
 if (APPLE)
-	add_custom_command(
-		TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_directory
-				${PROJECT_SOURCE_DIR}/${dir}
-				${DestDir}/${PROJECT_NAME}.app/Contents/MacOS/${dir})
+        add_custom_command(
+                TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                                ${PROJECT_SOURCE_DIR}/${dir}
+                                ${DestDir}/${APP_OUTPUT_NAME}.app/Contents/MacOS/${dir})
 else()
-	add_custom_command(
-		TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_directory
-				${PROJECT_SOURCE_DIR}/${dir}
-				${DestDir}/${dir})
+        add_custom_command(
+                TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                                ${PROJECT_SOURCE_DIR}/${dir}
+                                ${DestDir}/${dir})
 endif()
 endforeach()
 
@@ -41,5 +41,5 @@ if (APPLE)
         TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${DestDir}/downloader.app
-            ${DestDir}/${PROJECT_NAME}.app/Contents/MacOS/downloader.app)
+            ${DestDir}/${APP_OUTPUT_NAME}.app/Contents/MacOS/downloader.app)
 endif()
