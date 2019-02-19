@@ -126,5 +126,6 @@
         <file>icons/vector.png</file>
         <file>icons/object.png</file>
         <file>icons/utility.png</file>
+        <file>icons/shader_overlay.png</file>
     </qresource>
 </RCC>
