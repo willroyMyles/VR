@@ -39,6 +39,7 @@ set(SRCS
     src/widgets/colorvaluewidget.cpp 
     src/widgets/colorpickerwidget.cpp 
     src/dialogs/preferencesdialog.cpp 
+    src/dialogs/modelpickerdialog.cpp 
     src/dialogs/aboutdialog.cpp 
     src/dialogs/preferences/worldsettings.cpp 
     src/dialogs/preferences/worldsettingswidget.cpp 
@@ -167,6 +168,7 @@ set(HEADERS
     src/widgets/colorpickerwidget.h 
     src/helpers/settingshelper.h 
     src/dialogs/preferencesdialog.h 
+    src/dialogs/modelpickerdialog.h 
     src/dialogs/aboutdialog.h 
     src/dialogs/preferences/worldsettings.h 
     src/dialogs/preferences/worldsettingswidget.h 
