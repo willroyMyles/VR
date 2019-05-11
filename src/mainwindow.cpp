@@ -20,6 +20,7 @@ For more information see the LICENSE file
 
 #include <memory>
 
+#include "src/dialogs/modelpickerdialog.h"
 #include "irisgl/src/scenegraph/meshnode.h"
 #include "irisgl/src/scenegraph/cameranode.h"
 #include "irisgl/src/scenegraph/scene.h"
@@ -2395,11 +2396,14 @@ void MainWindow::setupViewPort()
 	minerBtn->setStyleSheet("background:transparent;");
 	minerBtn->setCursor(Qt::PointingHandCursor);
 	connect(minerBtn, &QPushButton::pressed, [this]() {
-		auto popup = new CustomPopup(QCursor::pos());
+		/*auto popup = new CustomPopup(QCursor::pos());
 		popup->addConfirmAndCancelButtons("visit","close");
 		popup->addMessage("The miner has been moved out of the application, press visit to download");
 		popup->addTitle("Attention");
-		popup->exec();
+		popup->exec();*/
+
+		auto d = new ModelPickerDialog(db);
+		d->exec();
 	});
 
 	help = new QPushButton;
