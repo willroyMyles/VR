@@ -10,6 +10,7 @@
 
 class CustomDialog : public QDialog
 {
+	Q_OBJECT
 public:
     CustomDialog(Qt::Orientation ori = Qt::Horizontal);
     QWidget *holder; // body of the widget

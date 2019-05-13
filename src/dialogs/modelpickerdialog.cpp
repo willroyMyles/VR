@@ -2,6 +2,8 @@
 #include "src/core/guidmanager.h"
 #include "src/constants.h"
 #include "zip.h"
+#include "../widgets/assetviewer.h"
+#include "src/misc/stylesheet.h"
 
 #include <QFileDialog>
 #include <QStandardPaths>
@@ -9,7 +11,8 @@
 #include <QTemporaryDir>
 #include <QMessageBox>
 #include <QDirIterator>
-
+#include <QDebug>
+#include <QCheckBox>
 ModelPickerDialog::ModelPickerDialog(Database *d) : CustomDialog()
 {
 	db = d;
@@ -25,34 +28,64 @@ ModelPickerDialog::~ModelPickerDialog()
 
 void ModelPickerDialog::configureUi()
 {
-	ScenceAndTextureHolder = new QWidget(this);
-	gridLayout = new QGridLayout;
-	textureWidget = new QPushButton("click to choose texture");
-	modelPicker = new QPushButton("...");
+	scenceAndTextureHolder = new QWidget;
+	textureWidget = new QPushButton;
+	modelPicker = new QPushButton("Choose model");
+	texturePicker = new QPushButton("Choose texture");
 	modelName = new QLineEdit();
 	assetViewer = new AssetViewer();
+	modelHolder = new QWidget;
+	textureHolder = new QWidget;
+	stackWidget = new QStackedWidget;
+	modelCheck = new QCheckBox(this);
+	textureCheck = new QCheckBox(this);
 
-	auto hbox1 = new QHBoxLayout;
-	auto hbox2 = new QHBoxLayout;
-	hbox1->addWidget(assetViewer);
-	hbox1->addWidget(textureWidget);
-	hbox2->addWidget(modelPicker);
-	hbox2->addWidget(modelName);
+	modelCheck->setTristate(false);
+	textureCheck->setTristate(false);
 
-	ScenceAndTextureHolder->setLayout(gridLayout);
+	auto vboxFinal = new QVBoxLayout;
+	auto vbox1 = new QVBoxLayout;
+	auto vbox2 = new QVBoxLayout;
 
-	gridLayout->addLayout(hbox1, 0, 0);
-	gridLayout->addLayout(hbox2, 1, 0);
+	vbox1->addWidget(assetViewer);
+	vbox1->addWidget(modelPicker);
+	vbox2->addWidget(textureWidget);
+	vbox2->addWidget(texturePicker);
 
-	insertWidget(ScenceAndTextureHolder);
+	modelHolder->setLayout(vbox1);
+	textureHolder->setLayout(vbox2);
+	scenceAndTextureHolder->setLayout(vboxFinal);
+
+	auto checkWidget = new QWidget;
+	auto checkLayout = new QHBoxLayout;
+	checkWidget->setLayout(checkLayout);
+
+	checkLayout->addStretch();
+	checkLayout->addWidget(modelCheck);
+	checkLayout->addWidget(textureCheck);
+	checkLayout->addStretch();
+	checkLayout->setContentsMargins(0, 0, 0, 0);
+	checkLayout->setSpacing(1);
+
+	stackWidget->addWidget(modelHolder);
+	stackWidget->addWidget(textureHolder);
+
+	vboxFinal->addWidget(stackWidget);
+	vboxFinal->addWidget(checkWidget);
+
 
 	assetViewer->setFixedHeight(150);
-
-	holder->setFixedHeight(300);
-
-	textureWidget->setVisible(false);
+	textureWidget->setFixedHeight(150); 
+	holder->setFixedHeight(340);
+	insertWidget(scenceAndTextureHolder);
+	modelPicker->setStyleSheet(StyleSheet::QPushButtonGreyscale());
+	texturePicker->setStyleSheet(StyleSheet::QPushButtonGreyscale());
+	modelCheck->setStyleSheet(StyleSheet::QCheckBoxBlue());
+	textureCheck->setStyleSheet(StyleSheet::QCheckBoxBlue());
 
 	setUpConnections();
+	qDebug() << modelHolder->geometry();
+	
 }
 
 void ModelPickerDialog::setUpConnections()
@@ -61,7 +94,26 @@ void ModelPickerDialog::setUpConnections()
 		auto p = QFileDialog::getOpenFileName(this, "Load Model");
 		if (p.isEmpty()) return;
 		else importJahModel(p);
-		
+		});
+	connect(texturePicker, &QPushButton::clicked, [=]() {
+		auto p = QFileDialog::getOpenFileName(this, "Load Texture");
+		if (p.isEmpty()) return;
+		else {
+			textureWidget->setIcon(QIcon(p));
+			textureFileName = p;
+			textureWidget->setIconSize({ textureWidget->width(), textureWidget->height() });
+			emit textureChanged(p);
+			texturePicked = true;
+			textureCheck->setChecked(texturePicked);
+			}
+		});
+	connect(modelCheck, &QCheckBox::clicked, [=]() {
+		modelCheck->setChecked(modelPicked);
+		stackWidget->setCurrentIndex(0);
+	});
+	connect(textureCheck, &QCheckBox::clicked, [=]() {
+		textureCheck->setChecked(texturePicked);
+		stackWidget->setCurrentIndex(1);
 	});
 }
 
@@ -207,7 +259,22 @@ void ModelPickerDialog::importJahModel(const QString& fileName)
 
 			modelName->setText(QFileInfo(fileName).baseName());
 			assetViewer->loadJafModel(path, guid);
+			emit modelChanged();
+			modelPicked = true;
 			//addToJahLibrary(filename, guid, true);
+
+			//create timer to swtch stacked widget
+			QTimer* timer = new QTimer;
+			connect(timer, &QTimer::timeout, [=]() {
+				stackWidget->setCurrentIndex(1);
+				modelCheck->setChecked(modelPicked);
+				});
+			timer->setSingleShot(true);
+			timer->setInterval(600);
+			timer->start();
+			
 		}
 	}
+
+	textureWidget->setVisible(true);
 }

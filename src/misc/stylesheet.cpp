@@ -160,6 +160,16 @@ const QString StyleSheet::QCheckBox()
 	);
 }
 
+const QString StyleSheet::QCheckBoxBlue()
+{
+	return QString(
+		//"QCheckBox { width: 16px; height :16px; }"
+		"QCheckBox::indicator {   width: 10px;   height: 10px; padding :1px;  }"
+		"QCheckBox::indicator::unchecked {	 background : rgba(50,50,50,0.9);}"
+		"QCheckBox::indicator::checked { background : rgba(50,148,213,0.9);}"
+	);
+}
+
 const QString StyleSheet::QSplitter()
 {
 	return QString(

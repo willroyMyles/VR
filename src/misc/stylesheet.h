@@ -30,6 +30,7 @@ public:
     static const QString QLabelWhite();
     static const QString QComboBox();
 	static const QString QCheckBox();
+	static const QString QCheckBoxBlue();
 	static const QString QSplitter();
 	static const QString QAbstractScrollArea();
 	static void setStyle(QWidget *);
