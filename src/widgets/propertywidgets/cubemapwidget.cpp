@@ -336,7 +336,7 @@ void CubeMapButton::selectImage()
 {
 	auto widget = new AssetPickerWidget(ModelTypes::Texture);
 	connect(widget, &AssetPickerWidget::itemDoubleClicked, [=](QListWidgetItem * item) {
-		textureGuid = item->data(Qt::DisplayRole).toString();
+		textureGuid = item->data(MODEL_GUID_ROLE).toString();
 		setImage(item->data(Qt::UserRole).toString());
 	}); 
 }
