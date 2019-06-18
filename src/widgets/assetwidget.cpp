@@ -59,6 +59,8 @@ For more information see the LICENSE file
 #include "io/materialpresetreader.h"
 #include "io/materialreader.hpp"
 
+#include "src/dialogs/modelpickerdialog.h"
+
 AssetWidget::AssetWidget(Database *handle, QWidget *parent) : QWidget(parent), ui(new Ui::AssetWidget)
 {
 	ui->setupUi(this);
@@ -1953,8 +1955,18 @@ void AssetWidget::createFolder()
 
 void AssetWidget::importAssetB()
 {
-	auto fileNames = QFileDialog::getOpenFileNames(this, "Import Asset");
-	if (!fileNames.isEmpty()) importAsset(fileNames);
+	//auto fileNames = QFileDialog::getOpenFileNames(this, "Import Asset");
+	//if (!fileNames.isEmpty()) importAsset(fileNames);
+
+	//qDebug() << fileNames;
+
+	auto d = new ModelPickerDialog(db);
+	d->exec();
+
+	if (d->Accepted) {
+		if (!d->modelPath->text().isEmpty()) importAsset({ d->modelPath->text() });
+		if (!d->texturePath->text().isEmpty()) importAsset({ d->texturePath->text() });
+	}
 }
 
 void AssetWidget::importJafAssets(const QList<directory_tuple> &fileNames)

@@ -28,60 +28,30 @@ ModelPickerDialog::~ModelPickerDialog()
 
 void ModelPickerDialog::configureUi()
 {
-	scenceAndTextureHolder = new QWidget;
-	textureWidget = new QPushButton;
+
 	modelPicker = new QPushButton("Choose model");
 	texturePicker = new QPushButton("Choose texture");
-	modelName = new QLineEdit();
-	assetViewer = new AssetViewer();
+
 	modelHolder = new QWidget;
-	textureHolder = new QWidget;
-	stackWidget = new QStackedWidget;
-	modelCheck = new QCheckBox(this);
-	textureCheck = new QCheckBox(this);
 
-	modelCheck->setTristate(false);
-	textureCheck->setTristate(false);
+	modelPath = new QLineEdit;
+	texturePath = new QLineEdit;
 
-	auto vboxFinal = new QVBoxLayout;
-	auto vbox1 = new QVBoxLayout;
-	auto vbox2 = new QVBoxLayout;
-
-	vbox1->addWidget(assetViewer);
-	vbox1->addWidget(modelPicker);
-	vbox2->addWidget(textureWidget);
-	vbox2->addWidget(texturePicker);
-
-	modelHolder->setLayout(vbox1);
-	textureHolder->setLayout(vbox2);
-	scenceAndTextureHolder->setLayout(vboxFinal);
-
-	auto checkWidget = new QWidget;
-	auto checkLayout = new QHBoxLayout;
-	checkWidget->setLayout(checkLayout);
-
-	checkLayout->addStretch();
-	checkLayout->addWidget(modelCheck);
-	checkLayout->addWidget(textureCheck);
-	checkLayout->addStretch();
-	checkLayout->setContentsMargins(0, 0, 0, 0);
-	checkLayout->setSpacing(1);
-
-	stackWidget->addWidget(modelHolder);
-	stackWidget->addWidget(textureHolder);
-
-	vboxFinal->addWidget(stackWidget);
-	vboxFinal->addWidget(checkWidget);
+	auto grid = new QGridLayout;
+	grid->setHorizontalSpacing(0);
+	grid->addWidget(modelPath, 0, 0);
+	grid->addWidget(texturePath, 1, 0);
+	grid->addWidget(modelPicker, 0, 1);
+	grid->addWidget(texturePicker, 1, 1);
+	modelHolder->setLayout(grid);
 
 
-	assetViewer->setFixedHeight(150);
-	textureWidget->setFixedHeight(150); 
-	holder->setFixedHeight(340);
-	insertWidget(scenceAndTextureHolder);
+	holder->setMinimumWidth(450);
+	insertWidget(modelHolder);
 	modelPicker->setStyleSheet(StyleSheet::QPushButtonGreyscale());
 	texturePicker->setStyleSheet(StyleSheet::QPushButtonGreyscale());
-	modelCheck->setStyleSheet(StyleSheet::QCheckBoxBlue());
-	textureCheck->setStyleSheet(StyleSheet::QCheckBoxBlue());
+	modelPath->setStyleSheet(StyleSheet::QLineEdit());
+	texturePath->setStyleSheet(StyleSheet::QLineEdit());
 
 	setUpConnections();
 	qDebug() << modelHolder->geometry();
@@ -93,28 +63,17 @@ void ModelPickerDialog::setUpConnections()
 	connect(modelPicker, &QPushButton::clicked, [=]() {
 		auto p = QFileDialog::getOpenFileName(this, "Load Model");
 		if (p.isEmpty()) return;
-		else importJahModel(p);
+		else modelPath->setText(p);
 		});
 	connect(texturePicker, &QPushButton::clicked, [=]() {
 		auto p = QFileDialog::getOpenFileName(this, "Load Texture");
 		if (p.isEmpty()) return;
 		else {
-			textureWidget->setIcon(QIcon(p));
-			textureFileName = p;
-			textureWidget->setIconSize({ textureWidget->width(), textureWidget->height() });
+			texturePath->setText(p);
 			emit textureChanged(p);
 			texturePicked = true;
-			textureCheck->setChecked(texturePicked);
 			}
 		});
-	connect(modelCheck, &QCheckBox::clicked, [=]() {
-		modelCheck->setChecked(modelPicked);
-		stackWidget->setCurrentIndex(0);
-	});
-	connect(textureCheck, &QCheckBox::clicked, [=]() {
-		textureCheck->setChecked(texturePicked);
-		stackWidget->setCurrentIndex(1);
-	});
 }
 
 void ModelPickerDialog::importJahModel(const QString& fileName)
@@ -257,24 +216,14 @@ void ModelPickerDialog::importJahModel(const QString& fileName)
 				}
 			}
 
-			modelName->setText(QFileInfo(fileName).baseName());
-			assetViewer->loadJafModel(path, guid);
+			modelPath->setText(QFileInfo(fileName).baseName());
+			//assetViewer->loadJafModel(path, guid);
 			emit modelChanged();
 			modelPicked = true;
 			//addToJahLibrary(filename, guid, true);
 
-			//create timer to swtch stacked widget
-			QTimer* timer = new QTimer;
-			connect(timer, &QTimer::timeout, [=]() {
-				stackWidget->setCurrentIndex(1);
-				modelCheck->setChecked(modelPicked);
-				});
-			timer->setSingleShot(true);
-			timer->setInterval(600);
-			timer->start();
 			
 		}
 	}
 
-	textureWidget->setVisible(true);
 }

@@ -17,23 +17,19 @@ public:
 	~ModelPickerDialog();
 
 	void configureUi();
+	QLineEdit* modelPath;
+	QLineEdit* texturePath;
+
 
 private:
-	AssetViewer *assetViewer;
-	QPushButton* textureWidget;
+	
 	QPushButton* modelPicker;
 	QPushButton* texturePicker;
-	QLineEdit* modelName;
-	QWidget* scenceAndTextureHolder;
 	QGridLayout* grid;
 	Database* db;
-	QString textureFileName = "";
 
 	QWidget* modelHolder;
 	QWidget* textureHolder;
-	QStackedWidget* stackWidget;
-	QCheckBox* modelCheck;
-	QCheckBox* textureCheck;
 
 	bool modelPicked = false;
 	bool texturePicked = false;

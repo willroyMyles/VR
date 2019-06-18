@@ -2402,8 +2402,7 @@ void MainWindow::setupViewPort()
 		popup->addTitle("Attention");
 		popup->exec();*/
 
-		auto d = new ModelPickerDialog(db);
-		d->exec();
+	
 	});
 
 	help = new QPushButton;
