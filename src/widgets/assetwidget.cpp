@@ -1964,9 +1964,8 @@ void AssetWidget::importAssetB()
 	d->exec();
 
 	if (d->Accepted) {
-		if (!d->modelPath->text().isEmpty()) importAsset({ d->modelPath->text() });
-		if (!d->texturePath->text().isEmpty()) importAsset({ d->texturePath->text() });
-	}
+		d->importModelAndTextureAndCreateDependency();
+	} 
 }
 
 void AssetWidget::importJafAssets(const QList<directory_tuple> &fileNames)

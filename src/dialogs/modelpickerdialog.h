@@ -8,6 +8,8 @@
 #include <QStackedWidget>
 #include <QCheckBox>
 
+
+
 class AssetViewer;
 class ModelPickerDialog : public CustomDialog
 {
@@ -20,6 +22,9 @@ public:
 	QLineEdit* modelPath;
 	QLineEdit* texturePath;
 
+	bool modelPicked = false;
+	bool texturePicked = false;
+	void importModelAndTextureAndCreateDependency();
 
 private:
 	
@@ -31,12 +36,11 @@ private:
 	QWidget* modelHolder;
 	QWidget* textureHolder;
 
-	bool modelPicked = false;
-	bool texturePicked = false;
 	
 
 	void setUpConnections();
-	void importJahModel(const QString& fileName);
+	QString importJahModel(const QString& fileName);
+	QString importTexture(const QString&);
 
 signals:
 	void textureChanged(QString texture);

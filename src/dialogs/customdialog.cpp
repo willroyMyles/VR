@@ -139,6 +139,7 @@ void CustomDialog::configureConnections()
 {
     if(buttonWidget->children().contains(okBtn))
     connect(okBtn, &QPushButton::clicked,[=](){
+		emit okPressed();
         emit accepted();
 		this->accept();
         close();

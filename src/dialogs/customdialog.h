@@ -36,6 +36,9 @@ public:
 
 private:
     void configureConnections();
+
+signals:
+	void okPressed();
 };
 
 #endif // CUSTOMDIALOG_H
