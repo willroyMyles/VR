@@ -86,6 +86,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="importModelBtn">
+        <property name="text">
+         <string>Import Model</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="importBtn">
         <property name="text">
          <string>Import Asset</string>

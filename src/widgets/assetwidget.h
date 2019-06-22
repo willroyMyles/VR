@@ -297,6 +297,7 @@ protected slots:
     void importJafAssets(const QList<directory_tuple>&);
 
     void onThumbnailResult(ThumbnailResult* result);
+	void importModel();
 
 private:
     Ui::AssetWidget *ui;

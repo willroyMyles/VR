@@ -117,6 +117,7 @@ AssetWidget::AssetWidget(Database *handle, QWidget *parent) : QWidget(parent), u
 	connect(ui->searchBar, SIGNAL(textChanged(QString)), this, SLOT(searchAssets(QString)));
 
 	connect(ui->importBtn, SIGNAL(pressed()), SLOT(importAssetB()));
+	connect(ui->importModelBtn, SIGNAL(pressed()), SLOT(importModel()));
 
 	// The signal will be emitted from another thread (Nick)
 	connect(ThumbnailGenerator::getSingleton()->renderThread,   SIGNAL(thumbnailComplete(ThumbnailResult*)),
@@ -1955,17 +1956,9 @@ void AssetWidget::createFolder()
 
 void AssetWidget::importAssetB()
 {
-	//auto fileNames = QFileDialog::getOpenFileNames(this, "Import Asset");
-	//if (!fileNames.isEmpty()) importAsset(fileNames);
-
-	//qDebug() << fileNames;
-
-	auto d = new ModelPickerDialog(db);
-	d->exec();
-
-	if (d->Accepted) {
-		d->importModelAndTextureAndCreateDependency();
-	} 
+	auto fileNames = QFileDialog::getOpenFileNames(this, "Import Asset");
+	if (!fileNames.isEmpty()) importAsset(fileNames);
+	
 }
 
 void AssetWidget::importJafAssets(const QList<directory_tuple> &fileNames)
@@ -2729,4 +2722,14 @@ void AssetWidget::onThumbnailResult(ThumbnailResult *result)
     }
 
 	delete result;
+}
+
+void AssetWidget::importModel()
+{
+	auto d = new ModelPickerDialog(db);
+	d->exec();
+
+	if (d->Accepted) {
+		d->importModelAndTextureAndCreateDependency();
+	}
 }
