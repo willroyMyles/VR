@@ -7,38 +7,38 @@
     "fog": true,
     "fragment_shader": "shader.frag",
     "lighting": true,
-    "name": "Grass",
+    "name": "stone wall",
     "receiveShadows": true,
     "renderLayer": "Opaque",
     "shadergraph": {
         "connections": [
             {
-                "id": "4266e34c-8d83-4d48-8f10-d45f148e82ff",
+                "id": "465d8f14-f268-48de-bd44-3723cd9c4110",
                 "leftNodeId": "e124bdb7-c4cf-44dc-939c-7f271e13bbad",
                 "leftNodeSocketIndex": 1,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 0
             },
             {
-                "id": "7f3b0ea2-ca19-4fa4-95c1-ddc70c679125",
-                "leftNodeId": "bfdf5d36-6478-4cda-90c5-6ee02fa2027c",
-                "leftNodeSocketIndex": 1,
-                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
-                "rightNodeSocketIndex": 3
-            },
-            {
-                "id": "f9403797-3eb1-4adb-9588-025260145fe3",
+                "id": "59b303c5-ccd1-4518-8505-f7fc3519e437",
                 "leftNodeId": "ee53ee6c-7586-481e-8515-2ef2966dbbf8",
                 "leftNodeSocketIndex": 1,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 1
             },
             {
-                "id": "fd81cfa0-2ad0-4f13-a3d1-f08a5ec30a93",
+                "id": "89037518-24fa-4220-8920-8b1e1c4d6a84",
                 "leftNodeId": "77d85fc9-bbef-4110-84c2-77ce2ba6d6ba",
                 "leftNodeSocketIndex": 0,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 2
+            },
+            {
+                "id": "c7689820-6919-407c-b5e6-2347f4d4b920",
+                "leftNodeId": "bfdf5d36-6478-4cda-90c5-6ee02fa2027c",
+                "leftNodeSocketIndex": 2,
+                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
+                "rightNodeSocketIndex": 3
             }
         ],
         "masternode": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
@@ -87,7 +87,7 @@
                 "name": "property0",
                 "type": "texture",
                 "uniform": "input_property0",
-                "value": "7fb8f9e9-bda4-4c2e-80a9-3b39448c0dfe"
+                "value": "e0b882f7-862e-427a-b161-df324ce4d97d"
             },
             {
                 "displayName": "Texture Property",
@@ -95,7 +95,7 @@
                 "name": "property1",
                 "type": "texture",
                 "uniform": "input_property1",
-                "value": "1ba25c42-e7db-4a55-9726-3ca94dc37d13"
+                "value": "d1be95c9-9882-4b7a-9328-18375d7b2337"
             },
             {
                 "displayName": "Texture Property",
@@ -103,7 +103,7 @@
                 "name": "property2",
                 "type": "texture",
                 "uniform": "input_property2",
-                "value": "f64a0d41-f66f-43e4-a2f8-0108b7eadbb1"
+                "value": "e0c7a630-5c9c-4ea5-847a-e06f24faa646"
             },
             {
                 "displayName": "Float Property",
@@ -123,7 +123,7 @@
             "cullMode": "Back",
             "depthTest": true,
             "fog": true,
-            "name": "Grass",
+            "name": "stone wall",
             "receiveShadow": true,
             "renderLayer": "Opaque",
             "zWrite": true

@@ -7,38 +7,38 @@
     "fog": true,
     "fragment_shader": "shader.frag",
     "lighting": true,
-    "name": "Grass",
+    "name": "grassV2",
     "receiveShadows": true,
     "renderLayer": "Opaque",
     "shadergraph": {
         "connections": [
             {
-                "id": "4266e34c-8d83-4d48-8f10-d45f148e82ff",
+                "id": "05f9db7c-1120-4dbc-9797-358cc27d7f81",
+                "leftNodeId": "bfdf5d36-6478-4cda-90c5-6ee02fa2027c",
+                "leftNodeSocketIndex": 2,
+                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
+                "rightNodeSocketIndex": 3
+            },
+            {
+                "id": "c3b4396c-421b-475a-bb84-63d5adb1ec7c",
+                "leftNodeId": "77d85fc9-bbef-4110-84c2-77ce2ba6d6ba",
+                "leftNodeSocketIndex": 0,
+                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
+                "rightNodeSocketIndex": 2
+            },
+            {
+                "id": "caa1ea34-fe8c-4f9e-bd53-7128951babc5",
                 "leftNodeId": "e124bdb7-c4cf-44dc-939c-7f271e13bbad",
                 "leftNodeSocketIndex": 1,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 0
             },
             {
-                "id": "7f3b0ea2-ca19-4fa4-95c1-ddc70c679125",
-                "leftNodeId": "bfdf5d36-6478-4cda-90c5-6ee02fa2027c",
-                "leftNodeSocketIndex": 1,
-                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
-                "rightNodeSocketIndex": 3
-            },
-            {
-                "id": "f9403797-3eb1-4adb-9588-025260145fe3",
+                "id": "f291c7ca-3877-4788-8274-e2d6a0217976",
                 "leftNodeId": "ee53ee6c-7586-481e-8515-2ef2966dbbf8",
                 "leftNodeSocketIndex": 1,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 1
-            },
-            {
-                "id": "fd81cfa0-2ad0-4f13-a3d1-f08a5ec30a93",
-                "leftNodeId": "77d85fc9-bbef-4110-84c2-77ce2ba6d6ba",
-                "leftNodeSocketIndex": 0,
-                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
-                "rightNodeSocketIndex": 2
             }
         ],
         "masternode": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
@@ -87,7 +87,7 @@
                 "name": "property0",
                 "type": "texture",
                 "uniform": "input_property0",
-                "value": "99287cbf-a7bd-404c-9def-51c8a5eb7ecf"
+                "value": "3affab68-f9ee-438b-a5e4-94b51c8276e6"
             },
             {
                 "displayName": "Texture Property",
@@ -95,7 +95,7 @@
                 "name": "property1",
                 "type": "texture",
                 "uniform": "input_property1",
-                "value": "f3663051-422c-41cd-9dde-b03b0359676d"
+                "value": "d6588181-ad3f-4bbc-a98d-558e2b3c5402"
             },
             {
                 "displayName": "Texture Property",
@@ -103,7 +103,7 @@
                 "name": "property2",
                 "type": "texture",
                 "uniform": "input_property2",
-                "value": "a926a0a8-e4d5-41d6-9464-23b027c5d239"
+                "value": "7c034e64-95f2-4c85-a07d-27740c2d1b9a"
             },
             {
                 "displayName": "Float Property",
@@ -123,7 +123,7 @@
             "cullMode": "Back",
             "depthTest": true,
             "fog": true,
-            "name": "Grass",
+            "name": "grassV2",
             "receiveShadow": true,
             "renderLayer": "Opaque",
             "zWrite": true

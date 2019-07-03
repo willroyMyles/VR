@@ -7,38 +7,38 @@
     "fog": true,
     "fragment_shader": "shader.frag",
     "lighting": true,
-    "name": "Grass",
+    "name": "marble tile",
     "receiveShadows": true,
     "renderLayer": "Opaque",
     "shadergraph": {
         "connections": [
             {
-                "id": "4266e34c-8d83-4d48-8f10-d45f148e82ff",
+                "id": "26a3708c-18d0-41ee-8dbf-5cd2d8b27aaf",
+                "leftNodeId": "bfdf5d36-6478-4cda-90c5-6ee02fa2027c",
+                "leftNodeSocketIndex": 2,
+                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
+                "rightNodeSocketIndex": 3
+            },
+            {
+                "id": "63ef1586-8a4c-49c6-88ba-cc06410de561",
                 "leftNodeId": "e124bdb7-c4cf-44dc-939c-7f271e13bbad",
                 "leftNodeSocketIndex": 1,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 0
             },
             {
-                "id": "7f3b0ea2-ca19-4fa4-95c1-ddc70c679125",
-                "leftNodeId": "bfdf5d36-6478-4cda-90c5-6ee02fa2027c",
-                "leftNodeSocketIndex": 1,
-                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
-                "rightNodeSocketIndex": 3
-            },
-            {
-                "id": "f9403797-3eb1-4adb-9588-025260145fe3",
-                "leftNodeId": "ee53ee6c-7586-481e-8515-2ef2966dbbf8",
-                "leftNodeSocketIndex": 1,
-                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
-                "rightNodeSocketIndex": 1
-            },
-            {
-                "id": "fd81cfa0-2ad0-4f13-a3d1-f08a5ec30a93",
+                "id": "c22eb2a6-b29b-46c8-9f55-ee556933e3c8",
                 "leftNodeId": "77d85fc9-bbef-4110-84c2-77ce2ba6d6ba",
                 "leftNodeSocketIndex": 0,
                 "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
                 "rightNodeSocketIndex": 2
+            },
+            {
+                "id": "ea80a8f9-804f-4b05-a719-3ce41dca0a50",
+                "leftNodeId": "ee53ee6c-7586-481e-8515-2ef2966dbbf8",
+                "leftNodeSocketIndex": 1,
+                "rightNodeId": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
+                "rightNodeSocketIndex": 1
             }
         ],
         "masternode": "7cf4d9d3-5d33-4168-9251-a92f73bf9e49",
@@ -87,7 +87,7 @@
                 "name": "property0",
                 "type": "texture",
                 "uniform": "input_property0",
-                "value": "2c896b92-c099-4ce8-8cdb-4e842fe9b669"
+                "value": "fb415cbf-260d-4f2b-b2d6-3f6311a9ffeb"
             },
             {
                 "displayName": "Texture Property",
@@ -95,7 +95,7 @@
                 "name": "property1",
                 "type": "texture",
                 "uniform": "input_property1",
-                "value": "a08779a6-eac1-4bd9-8ca3-d9bc97bb7334"
+                "value": "41517bc2-7ccc-47e5-98eb-f32b62aaff5a"
             },
             {
                 "displayName": "Texture Property",
@@ -103,7 +103,7 @@
                 "name": "property2",
                 "type": "texture",
                 "uniform": "input_property2",
-                "value": "a96603ae-4195-41c3-9d00-b92c1751db3b"
+                "value": "7bc84b64-ad45-4f24-960b-cc6c22479bff"
             },
             {
                 "displayName": "Float Property",
@@ -123,7 +123,7 @@
             "cullMode": "Back",
             "depthTest": true,
             "fog": true,
-            "name": "Grass",
+            "name": "marble tile",
             "receiveShadow": true,
             "renderLayer": "Opaque",
             "zWrite": true
